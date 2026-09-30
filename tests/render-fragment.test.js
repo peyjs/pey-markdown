@@ -72,7 +72,7 @@ describe('renderFragment — GFM success path', () => {
 })
 
 describe('renderFragment — output is always sanitized', () => {
-  it('should_escape_raw_html_when_source_contains_script_tag', () => {
+  it('should_remove_raw_html_when_source_contains_script_tag', () => {
     const service = new MarkdownService()
 
     const { html } = service.renderFragment({ markdown: '<script>alert(1)</script>' })
@@ -86,6 +86,37 @@ describe('renderFragment — output is always sanitized', () => {
     const { html } = service.renderFragment({ markdown: '[x](javascript:alert(1))' })
 
     assert.ok(!html.includes('javascript:'), 'javascript: URI must not survive')
+  })
+
+  it('should_neutralize_raw_link_when_href_uses_entity_obfuscation', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '<a href="&#106;avascript:alert(1)">x</a>' })
+
+    assert.ok(!html.includes('&#106;'), 'entity must be escaped so it cannot resolve in the browser')
+  })
+})
+
+describe('renderFragment — raw HTML passthrough', () => {
+  it('should_keep_allowed_raw_tags_when_source_has_details_and_kbd', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: '<details><summary>more</summary><p>text</p></details>\n\n<kbd>Ctrl</kbd>',
+    })
+
+    assert.ok(html.includes('<details><summary>more</summary>'), 'details must pass through')
+    assert.ok(html.includes('<kbd>Ctrl</kbd>'), 'kbd must pass through')
+  })
+
+  it('should_keep_raw_div_when_source_has_div_with_safe_class', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: '<div class="parsneshan-note">hi</div>',
+    })
+
+    assert.ok(html.includes('<div class="parsneshan-note">'), 'safe raw div must pass through')
   })
 })
 

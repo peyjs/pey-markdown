@@ -46,6 +46,12 @@ describe('sanitizeHtml — safe content preserved', () => {
       '<p><a href="https://example.com">a</a> <a href="/docs">b</a></p>',
     )
   })
+
+  it('should_keep_disclosure_and_kbd_when_fragment_has_details_markup', () => {
+    const html = '<details><summary>more</summary><p>text</p></details><p><kbd>Ctrl</kbd></p>'
+
+    assert.equal(sanitizeHtml(html), html)
+  })
 })
 
 describe('sanitizeHtml — dangerous content removed', () => {
@@ -92,6 +98,17 @@ describe('sanitizeHtml — dangerous content removed', () => {
     const out = sanitizeHtml('<img src="data:text/html,<script>alert(1)</script>">')
 
     assert.ok(!out.includes('data:text/html'), 'data:text/html must not survive')
+  })
+
+  it('should_escape_entity_when_href_uses_entity_obfuscation', () => {
+    const out = sanitizeHtml('<p><a href="&#106;avascript:alert(1)">x</a></p>')
+
+    assert.ok(!out.includes('&#106;'), 'entity must be escaped so it cannot resolve in the browser')
+    assert.ok(out.includes('>x</a>'), 'link text must be preserved')
+  })
+
+  it('should_drop_case_variant_tags_when_script_uses_mixed_case', () => {
+    assert.equal(sanitizeHtml('<ScRiPt>alert(1)</ScRiPt><p>t</p>'), '<p>t</p>')
   })
 })
 

@@ -22,7 +22,7 @@
             { "name": "htmlExtensions", "type": "MicromarkHtmlExtension[] | null" }
           ],
           "returns": "{ html: string }",
-          "errors": ["MARKDOWN_RENDER_FAILED"]
+          "errors": ["MARKDOWN_RENDER_FAILED", "SERVICE_UNAVAILABLE"]
         }
       ]
     }
