@@ -1,19 +1,108 @@
 # pey.markdown
 
-افزونه `feature` بنیان (معماری `0.11`) برای تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان به‌صورت per-call.
+[![نسخه](https://img.shields.io/badge/version-1.0.0-blue.svg)](#) [![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE) [![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
+
+افزونه `feature` بنیان (معماری `0.11`) برای تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان در هر فراخوانی.
+
+## هدف
+
+یک ورودی Markdown، یک خروجی HTML fragment امن — بدون پوسته سند، بدون تم، بدون منطق UI. هر چهار مصرف چارچوب پی (دانلود HTML در ویرایشگر، ویکی شبیه docsify، پیام‌های گپ، صفحات وبگاه) فقط همین یک متد را صدا می‌زنند و پوسته را خودشان می‌سازند.
+
+## ویژگی‌ها
+
+- CommonMark + GFM (جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal) — همیشه روشن.
+- هسته فارسی-اگنوستیک: بدون افزونه تزریقی، خروجی کاملاً استاندارد است.
+- ضدعفونی با فهرست مجاز داخل خود افزونه: `script`، `on*`، `javascript:` و تگ‌های خطرناک هرگز زنده نمی‌مانند.
+- `lib/` خالص و سنکرون: بدون DOM، بدون Core/EventBus، بدون شبکه — قابل import مستقیم بیرون بنیان.
+- ESM مرورگر-مبنا، بدون باندلر؛ کد فنس‌دار فقط `<pre><code class="language-x">` ساده.
+
+## نصب
+
+```bash
+npm install pey.markdown
+```
+
+ثبت در `bootstrap.json`:
+
+```json
+{
+  "plugins": [
+    { "name": "pey.markdown", "version": "1.0.0", "path": "plugins/pey.markdown" }
+  ],
+  "config": {
+    "pey.markdown": { "maxInputChars": 200000 }
+  }
+}
+```
+
+## شروع سریع
+
+استفاده از سرویس (داخل بنیان، پس از `core:ready`):
+
+```js
+const service = /* pey.markdown.service از رجیستری */
+const { html } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
+```
+
+استفاده مستقل از `lib` (بیرون بنیان — ویکی ساده، رندر جزئی، تست):
+
+```js
+import MarkdownService from 'pey.markdown/lib/markdown-service.js'
+
+const service = new MarkdownService()
+const { html } = service.renderFragment({ markdown: '- [x] انجام شد' })
+```
+
+رندر با افزونه فارسی پارس‌نشان (کالر افزونه را می‌دهد، سرویس فقط ترکیب می‌کند):
+
+```js
+import { warning, warningHtml } from 'parsneshan'
+
+const { html } = service.renderFragment({
+  markdown: '... هشدار\nمتن **مهم**\n...\n',
+  syntaxExtensions: [warning()],
+  htmlExtensions: [warningHtml()],
+})
+```
+
+## پیکربندی
+
+| کلید | نوع | الزامی | پیش‌فرض | توضیح |
+|---|---|---|---|---|
+| `maxInputChars` | عدد | خیر | `200000` | سقف طول ورودی هر فراخوانی؛ عبور از آن خطای `MARKDOWN_RENDER_FAILED` می‌دهد |
 
 ## ساختار
 
-- `manifest.json` — قرارداد معتبر افزونه.
-- `package.json` — بسته ESM.
-- `index.js` — نقطه ورود دوفازی (`prepare`/`activate`).
-- `lib/` — `constants.js`، `error.js`، `sanitize.js`، `markdown-service.js` (خالص، سنکرون، بدون DOM).
-- `tests/` — تست‌های `node:test` به‌ازای هر فایل سورس.
+- `manifest.json` — قرارداد معتبر افزونه (هویت، سرویس، خطاها، پیکربندی).
+- `package.json` — بسته ESM و وابستگی‌های npm.
+- `index.js` — نقطه ورود دوفازی بنیان (`prepare`/`activate`).
+- `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
+- `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
+- `lib/sanitize.js` — سانیتایزر رشته‌ای خالص با فهرست مجاز (بدون DOM).
+- `lib/markdown-service.js` — سرویس رندر `renderFragment`؛ بدون حالت و سنکرون.
+- `tests/` — تست `node:test` به‌ازای هر فایل سورس (۵ فایل).
 - `docs/` — `requirements.md` (نیازمندی‌های پایه) و `reference.md` (مرجع کامل).
 
 ## وابستگی‌ها
 
-- **Required:** ندارد.
-- **Optional:** ندارد.
+- **ضروری:** ندارد.
+- **اختیاری:** ندارد.
 
-مرجع کامل API، خطاها، پیکربندی، قواعد و محدودیت‌ها در `docs/reference.md` است.
+وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm`، `micromark-extension-gfm-autolink-literal` و `parsneshan` (پین‌شده به `v0.1.0`؛ فقط افزونه تزریقی اختیاری).
+
+## آزمون‌ها
+
+```bash
+npm test
+```
+
+۵۳ تست سبز: رندر CommonMark/GFM، سانیتایزر و XSS، تزریق پارس‌نشان، قرارداد خطا و نقطه ورود دوفازی.
+
+## مستندات
+
+- مرجع کامل API، خطاها، پیکربندی، قواعد و محدودیت‌ها: [`docs/reference.md`](./docs/reference.md)
+- نیازمندی‌های پایه و مبنای پذیرش: [`docs/requirements.md`](./docs/requirements.md)
+
+## مجوز
+
+MIT — متن کامل در [`LICENSE`](./LICENSE).
