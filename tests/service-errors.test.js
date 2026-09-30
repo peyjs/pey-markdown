@@ -34,17 +34,32 @@ describe('error builders', () => {
     assertStandardError(buildServiceUnavailable(), ERROR_CODES.SERVICE_UNAVAILABLE, 'operational')
   })
 
-  it('should_truncate_message_when_raw_error_is_too_long', () => {
+  it('should_hide_raw_message_when_mapping_raw_error', () => {
     const error = mapError(new Error('x'.repeat(500)), 'renderFragment')
 
     assertStandardError(error, ERROR_CODES.MARKDOWN_RENDER_FAILED, 'operational')
-    assert.ok(error.message.length < 500, 'raw message must not leak in full')
+    assert.equal(error.message, 'Markdown render failed')
   })
 
   it('should_keep_detail_safe_when_mapping_raw_error', () => {
     const error = mapError(new Error('boom'), 'renderFragment')
 
     assert.deepEqual(error.detail, { context: 'renderFragment' })
+  })
+
+  it('should_carry_no_user_content_when_extension_throws_with_input', () => {
+    const marker = 'SECRET-MARKER-123'
+    const throwing = {
+      text: { 104: { tokenize() { throw new Error(`fail on ${marker}`) } } },
+    }
+    const service = new MarkdownService()
+
+    assert.throws(() => service.renderFragment({ markdown: 'hi', syntaxExtensions: [throwing] }), (error) => {
+      assertStandardError(error, ERROR_CODES.MARKDOWN_RENDER_FAILED, 'operational')
+      assert.ok(!error.message.includes(marker), 'extension error content must not leak')
+      assert.ok(!JSON.stringify(error.detail).includes(marker), 'detail must not leak either')
+      return true
+    })
   })
 })
 

@@ -126,6 +126,24 @@ describe('pey.markdown entry point', () => {
     })
   })
 
+  describe('prepare() — repeated calls stay independent', () => {
+    it('should_keep_second_service_alive_when_first_context_shuts_down', async () => {
+      const first = createPrepareContext()
+      const second = createPrepareContext()
+      const firstServices = await prepare(first)
+      const secondServices = await prepare(second)
+
+      await first.onShutdown()
+
+      assert.throws(() => firstServices[0].object.renderFragment({ markdown: 'hi' }), (error) => {
+        assert.equal(error.code, ERROR_CODES.SERVICE_UNAVAILABLE)
+        return true
+      })
+      const { html } = secondServices[0].object.renderFragment({ markdown: '# hi' })
+      assert.ok(html.includes('<h1>hi</h1>'), 'second service must stay usable')
+    })
+  })
+
   describe('manifest / code agreement', () => {
     it('should_expose_exactly_the_declared_service_name_when_prepare_succeeds', async () => {
       const ctx = createPrepareContext()

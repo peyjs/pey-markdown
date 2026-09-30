@@ -28,6 +28,32 @@ describe('renderFragment — CommonMark success path', () => {
     assert.ok(!html.includes('<span'), 'no highlighting markup must be added')
   })
 
+  it('should_render_language_class_when_fence_uses_plus_or_hash', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '```c++\nint x;\n```' })
+
+    assert.ok(html.includes('class="language-c++"'), 'c++ language class must survive')
+  })
+
+  it('should_keep_query_string_when_link_has_ampersand', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '[a](https://x.test/?a=1&b=2)' })
+
+    assert.ok(html.includes('?a=1&amp;b=2'), 'entity must stay single-escaped')
+    assert.ok(!html.includes('&amp;amp;'), 'no double escaping')
+  })
+
+  it('should_render_text_without_crash_when_source_has_prototype_names', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '<constructor> and <toString> here' })
+
+    assert.ok(!html.includes('<constructor>'), 'no live unknown tag must survive')
+    assert.ok(!html.includes('<toString>'), 'no live unknown tag must survive')
+  })
+
   it('should_return_empty_fragment_when_markdown_is_empty', () => {
     const service = new MarkdownService()
 
@@ -121,6 +147,16 @@ describe('renderFragment — raw HTML passthrough', () => {
 })
 
 describe('renderFragment — error path', () => {
+  it('should_throw_render_failed_when_input_is_null', () => {
+    const service = new MarkdownService()
+
+    assert.throws(() => service.renderFragment(null), (error) => {
+      assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+      assert.equal(error.type, 'operational')
+      return true
+    })
+  })
+
   it('should_throw_render_failed_when_markdown_is_not_a_string', () => {
     const service = new MarkdownService()
 
@@ -148,6 +184,44 @@ describe('renderFragment — error path', () => {
       assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
       return true
     })
+  })
+
+  it('should_throw_render_failed_when_extension_throws_during_render', () => {
+    const service = new MarkdownService()
+    const throwing = {
+      text: { 104: { tokenize() { throw new Error('boom') } } },
+    }
+
+    assert.throws(() => service.renderFragment({ markdown: 'hi', syntaxExtensions: [throwing] }), (error) => {
+      assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+      return true
+    })
+  })
+
+  it('should_enforce_limit_when_config_uses_numeric_string', () => {
+    const service = new MarkdownService({ maxInputChars: '10' })
+
+    assert.throws(() => service.renderFragment({ markdown: '0123456789!' }), (error) => {
+      assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+      return true
+    })
+    assert.ok(service.renderFragment({ markdown: '0123456789' }).html.length > 0)
+  })
+
+  it('should_render_large_input_when_within_configured_limit', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: `${'lorem ipsum dolor sit amet. '.repeat(5000)}\n` })
+
+    assert.ok(html.includes('<p>'), 'large input must render')
+  })
+
+  it('should_balance_tags_when_source_has_unclosed_div', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '<div><p>hi' })
+
+    assert.ok(html.endsWith('</p></div>'), 'fragment must be balanced')
   })
 
   it('should_throw_service_unavailable_when_called_after_deactivation', () => {

@@ -9,10 +9,10 @@ import { SERVICE_NAME } from './lib/constants.js'
 import MarkdownService from './lib/markdown-service.js'
 
 // Module-level closure: prepare()'s context is the same object reference the
-// Core reads back later (e.g. for onShutdown), and the lifecycle hooks need
-// the service instance without reaching into its internals.
+// Core reads back later (e.g. for onShutdown). Each prepare() call captures
+// its own service instance in its hooks, so two preparations never share
+// lifecycle state.
 let savedContext = null
-let serviceRef = null
 
 /**
  * Phase 1 — preparation.
@@ -29,18 +29,19 @@ export async function prepare(prepareContext) {
   const service = new MarkdownService({
     maxInputChars: prepareContext.config?.maxInputChars,
   })
-  serviceRef = service
 
   // Assign lifecycle hooks here (in prepare) rather than in activate(). If
   // activation never runs — e.g. the plugin is skipped at settlement — hooks
   // assigned in activate() would be lost and the service would stay usable
   // after deactivation instead of reporting SERVICE_UNAVAILABLE.
+  // The hooks close over this call's own service instance, never over
+  // module-level state, so repeated prepare() calls stay independent.
   savedContext.onShutdown = async () => {
-    serviceRef._setDeactivated()
+    service._setDeactivated()
   }
 
   savedContext.onDeactivated = async () => {
-    serviceRef._setDeactivated()
+    service._setDeactivated()
   }
 
   return [

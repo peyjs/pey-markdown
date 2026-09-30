@@ -55,6 +55,8 @@ const service = new MarkdownService()
 const { html } = service.renderFragment({ markdown: '- [x] انجام شد' })
 ```
 
+> نکته مرورگر: import با نام ساده در مرورگر بدون باندلر به import map نیاز دارد (مثلاً `"pey.markdown/"` به مسیر افزونه و `"micromark"` به CDN)؛ در Node کافی است وابستگی‌ها نصب شده باشند.
+
 رندر با افزونه فارسی پارس‌نشان (کالر افزونه را می‌دهد، سرویس فقط ترکیب می‌کند):
 
 ```js
@@ -98,7 +100,7 @@ const { html } = service.renderFragment({
 npm test
 ```
 
-۵۳ تست سبز: رندر CommonMark/GFM، سانیتایزر و XSS، تزریق پارس‌نشان، قرارداد خطا و نقطه ورود دوفازی.
+۸۱ تست سبز: رندر CommonMark/GFM و HTML خام، سانیتایزر و XSS و پرفورمنس، تزریق پارس‌نشان، قرارداد خطا، نقطه ورود دوفازی و هماهنگی منیفست.
 
 ## مستندات
 

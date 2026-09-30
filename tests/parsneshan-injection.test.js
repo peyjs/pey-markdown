@@ -10,6 +10,12 @@ import assert from 'node:assert/strict'
 import {
   warning,
   warningHtml,
+  caution,
+  cautionHtml,
+  important,
+  importantHtml,
+  tip,
+  tipHtml,
   note,
   noteHtml,
   persianListExtension,
@@ -85,6 +91,19 @@ describe('parsneshan injection — list and poem', () => {
 })
 
 describe('parsneshan injection — composition and safety', () => {
+  it('should_render_all_admonitions_when_each_extension_is_passed', () => {
+    const service = new MarkdownService()
+    const cases = [
+      ['... احتیاط\nx\n...\n', [caution()], [cautionHtml()], 'parsneshan-caution'],
+      ['... مهم\nx\n...\n', [important()], [importantHtml()], 'parsneshan-important'],
+      ['... راهنما\nx\n...\n', [tip()], [tipHtml()], 'parsneshan-tip'],
+    ]
+    for (const [markdown, syntaxExtensions, htmlExtensions, marker] of cases) {
+      const { html } = service.renderFragment({ markdown, syntaxExtensions, htmlExtensions })
+      assert.ok(html.includes(marker), `${marker} must render`)
+    }
+  })
+
   it('should_combine_extensions_when_warning_and_list_are_passed_together', () => {
     const service = new MarkdownService()
 
@@ -96,6 +115,19 @@ describe('parsneshan injection — composition and safety', () => {
 
     assert.ok(html.includes('<div class="parsneshan-warning">'), 'warning must render')
     assert.ok(html.includes('<ol'), 'list must render alongside')
+  })
+
+  it('should_combine_extensions_when_order_is_reversed', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: '... هشدار\nتوجه\n...\n\n۱. الف\n۲. ب\n',
+      syntaxExtensions: [persianListExtension(), warning()],
+      htmlExtensions: [persianListHtml(), warningHtml()],
+    })
+
+    assert.ok(html.includes('<div class="parsneshan-warning">'), 'warning must render in any order')
+    assert.ok(html.includes('<ol'), 'list must render in any order')
   })
 
   it('should_sanitize_output_when_injected_content_has_script', () => {

@@ -110,6 +110,43 @@ describe('sanitizeHtml — dangerous content removed', () => {
   it('should_drop_case_variant_tags_when_script_uses_mixed_case', () => {
     assert.equal(sanitizeHtml('<ScRiPt>alert(1)</ScRiPt><p>t</p>'), '<p>t</p>')
   })
+
+  it('should_keep_entity_when_href_has_escaped_ampersand', () => {
+    assert.equal(
+      sanitizeHtml('<p><a href="https://x.test/?a=1&amp;b=2">a</a></p>'),
+      '<p><a href="https://x.test/?a=1&amp;b=2">a</a></p>',
+    )
+  })
+
+  it('should_unwrap_prototype_names_when_tags_use_them', () => {
+    assert.equal(sanitizeHtml('<p><constructor>hi</p>'), '<p>hi</p>')
+    assert.equal(sanitizeHtml('<p><toString>hi</p>'), '<p>hi</p>')
+  })
+
+  it('should_balance_open_tags_when_fragment_is_unclosed', () => {
+    assert.equal(sanitizeHtml('<div><p>hi'), '<div><p>hi</p></div>')
+  })
+
+  it('should_drop_stray_closer_when_no_opener_exists', () => {
+    assert.equal(sanitizeHtml('<p>t</p></div>'), '<p>t</p>')
+  })
+
+  it('should_escape_stray_bracket_when_text_has_bare_less_than', () => {
+    assert.equal(sanitizeHtml('a < b'), 'a &lt; b')
+  })
+
+  it('should_disable_checkbox_when_raw_input_lacks_disabled', () => {
+    assert.equal(sanitizeHtml('<input type="checkbox">'), '<input type="checkbox" disabled>')
+  })
+
+  it('should_finish_quickly_when_input_is_adversarial', () => {
+    const start = Date.now()
+    sanitizeHtml('<!--'.repeat(66666))
+    sanitizeHtml('<a '.repeat(50000))
+    sanitizeHtml(`<div>${'x'.repeat(150000)}`)
+
+    assert.ok(Date.now() - start < 5000, 'adversarial input must not stall')
+  })
 })
 
 describe('sanitizeHtml — edge cases', () => {
