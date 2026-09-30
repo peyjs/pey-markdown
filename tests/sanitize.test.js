@@ -1,0 +1,108 @@
+// Tests for lib/sanitize.js — allowlist HTML sanitizer.
+// Strategy: pure function, no fakes needed. Each test passes a renderer-style
+// HTML fragment and asserts on the sanitized output only (manifest-visible
+// behavior), never on private helpers.
+
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+
+import { sanitizeHtml } from '../lib/sanitize.js'
+
+describe('sanitizeHtml — safe content preserved', () => {
+  it('should_keep_basic_formatting_when_fragment_has_allowed_tags', () => {
+    const out = sanitizeHtml('<p>Hello <strong>bold</strong> and <em>italic</em></p>')
+
+    assert.equal(out, '<p>Hello <strong>bold</strong> and <em>italic</em></p>')
+  })
+
+  it('should_keep_gfm_table_when_fragment_has_table_markup', () => {
+    const html = '<table><thead><tr><th align="center">h</th></tr></thead>'
+      + '<tbody><tr><td>c</td></tr></tbody></table>'
+
+    assert.equal(sanitizeHtml(html), html)
+  })
+
+  it('should_keep_task_checkbox_when_fragment_has_task_list_item', () => {
+    const html = '<ul><li><input type="checkbox" disabled=""> done</li></ul>'
+
+    assert.equal(sanitizeHtml(html), '<ul><li><input type="checkbox" disabled> done</li></ul>')
+  })
+
+  it('should_keep_language_class_when_code_block_has_language', () => {
+    const html = '<pre><code class="language-js">const a = 1</code></pre>'
+
+    assert.equal(sanitizeHtml(html), html)
+  })
+
+  it('should_keep_parsneshan_class_when_div_uses_parsneshan_prefix', () => {
+    const html = '<div class="parsneshan-warning"><p>note</p></div>'
+
+    assert.equal(sanitizeHtml(html), html)
+  })
+
+  it('should_keep_safe_links_when_href_uses_http_or_relative_uri', () => {
+    assert.equal(
+      sanitizeHtml('<p><a href="https://example.com">a</a> <a href="/docs">b</a></p>'),
+      '<p><a href="https://example.com">a</a> <a href="/docs">b</a></p>',
+    )
+  })
+})
+
+describe('sanitizeHtml — dangerous content removed', () => {
+  it('should_remove_script_with_content_when_fragment_has_script_element', () => {
+    assert.equal(sanitizeHtml('<script>alert(1)</script><p>ok</p>'), '<p>ok</p>')
+  })
+
+  it('should_remove_nested_script_content_when_script_contains_tags', () => {
+    assert.equal(
+      sanitizeHtml('<script><p>evil</p></script><p>ok</p>'),
+      '<p>ok</p>',
+    )
+  })
+
+  it('should_remove_event_handler_when_tag_has_on_attribute', () => {
+    assert.equal(sanitizeHtml('<img src="x.png" onerror="alert(1)">'), '<img src="x.png">')
+  })
+
+  it('should_neutralize_href_when_link_uses_javascript_uri', () => {
+    const out = sanitizeHtml('<a href="javascript:alert(1)">x</a>')
+
+    assert.ok(!out.includes('javascript:'), 'javascript: URI must not survive')
+    assert.ok(out.includes('>x</a>'), 'link text must be preserved')
+  })
+
+  it('should_remove_iframe_when_fragment_has_embedded_frame', () => {
+    assert.equal(sanitizeHtml('<iframe src="https://evil.test"></iframe><p>t</p>'), '<p>t</p>')
+  })
+
+  it('should_unwrap_content_when_tag_is_not_allowlisted', () => {
+    assert.equal(sanitizeHtml('<div class="evil"><p>t</p></div>'), '<div><p>t</p></div>')
+    assert.equal(sanitizeHtml('<form><p>t</p></form>'), '<p>t</p>')
+  })
+
+  it('should_remove_comments_when_fragment_has_html_comments', () => {
+    assert.equal(sanitizeHtml('<!-- secret --><p>t</p>'), '<p>t</p>')
+  })
+
+  it('should_remove_style_attribute_when_tag_has_inline_style', () => {
+    assert.equal(sanitizeHtml('<p style="color:red">t</p>'), '<p>t</p>')
+  })
+
+  it('should_drop_image_when_src_uses_data_text_html', () => {
+    const out = sanitizeHtml('<img src="data:text/html,<script>alert(1)</script>">')
+
+    assert.ok(!out.includes('data:text/html'), 'data:text/html must not survive')
+  })
+})
+
+describe('sanitizeHtml — edge cases', () => {
+  it('should_return_empty_string_when_input_is_empty', () => {
+    assert.equal(sanitizeHtml(''), '')
+  })
+
+  it('should_return_empty_string_when_input_is_not_a_string', () => {
+    assert.equal(sanitizeHtml(null), '')
+    assert.equal(sanitizeHtml(undefined), '')
+    assert.equal(sanitizeHtml(42), '')
+  })
+})
