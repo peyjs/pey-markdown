@@ -1,0 +1,93 @@
+# مرجع افزونه pey.markdown
+
+> قرارداد معتبر همیشه `manifest.json` است؛ در تعارض، ملاک `manifest.json` است و این سند باید اصلاح شود.
+
+## هدف
+
+تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان به‌صورت per-call. یک ورودی Markdown، یک خروجی fragment امن؛ بدون پوسته سند، بدون تم، بدون منطق UI.
+
+## ساختار
+
+- `manifest.json` — هویت، سرویس، خطاها، پیکربندی (قرارداد معتبر).
+- `package.json` — بسته ESM با وابستگی‌های `micromark`، `micromark-extension-gfm`، `micromark-extension-gfm-autolink-literal` و `parsneshan`.
+- `index.js` — نقطه ورود دوفازی بنیان (`prepare`/`activate`).
+- `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
+- `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
+- `lib/sanitize.js` — سانیتایزر allowlist رشته‌ای خالص (بدون DOM).
+- `lib/markdown-service.js` — سرویس رندر (`renderFragment`)؛ stateless و سنکرون.
+- `tests/sanitize.test.js` — تست‌های سانیتایزر.
+- `tests/render-fragment.test.js` — تست‌های رندر CommonMark/GFM و خطا.
+- `tests/entry.test.js` — تست‌های نقطه ورود دوفازی.
+- `tests/parsneshan-injection.test.js` — تست‌های تزریق افزونه‌های فارسی.
+- `tests/service-errors.test.js` — تست‌های قرارداد خطا.
+- `docs/requirements.md` — نیازمندی‌های پایه و مبنای پذیرش.
+- `docs/reference.md` — همین سند.
+- `README.md` — معرفی کوتاه و ارجاع به همین سند.
+- `CHANGELOG.md` — تاریخچه نسخه‌ها.
+
+## وابستگی‌ها
+
+- **Required:** ندارد.
+- **Optional:** ندارد.
+
+وابستگی‌های npm (در `package.json`، نه سرویس بنیان): `micromark` (موتور رندر)، `micromark-extension-gfm` و `micromark-extension-gfm-autolink-literal` (جدول، تسک‌لیست، strikethrough، اتولینک)، `parsneshan` (فقط افزونه تزریقی اختیاری per-call؛ هسته بدون آن کاملاً استاندارد کار می‌کند).
+
+## API عمومی
+
+سرویس `pey.markdown.service` با یک متد `renderFragment`. جزئیات رسمی پارامترها در `manifest.json` است؛ این‌جا فقط نحوه صدازدن:
+
+```js
+// رندر استاندارد (GFM همیشه روشن، بدون رفتار فارسی)
+const { html } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
+```
+
+```js
+// رندر با افزونه فارسی (کالر افزونه را می‌دهد، سرویس فقط ترکیب می‌کند)
+import { warning, warningHtml } from 'parsneshan'
+
+const { html } = service.renderFragment({
+  markdown: '... هشدار\nمتن **مهم**\n...\n',
+  syntaxExtensions: [warning()],
+  htmlExtensions: [warningHtml()],
+})
+```
+
+ورودی خالی (`''`) fragment تهی (`{ html: '' }`) برمی‌گرداند، نه خطا.
+
+## رویدادها
+
+- منتشر می‌کند: هیچی (`events: []`).
+- گوش می‌دهد: هیچی (بدون dependency، نیازی به `core:service-unavailable` نیست).
+
+## مرجع خطاها
+
+| کد | نوع | چه زمانی |
+|---|---|---|
+| `MARKDOWN_RENDER_FAILED` | operational | ورودی نامعتبر (غیررشته‌ای، افزونه غیرآرایه‌ای)، عبور از `maxInputChars`، یا خطای داخلی رندر/ضدعفونی |
+| `SERVICE_UNAVAILABLE` | operational (قرارداد مشترک همه سرویس‌ها) | فراخوانی پس از deactivate شدن افزونه |
+
+همه خطاها ساختار استاندارد بنیان دارند (`code/message/source/type/timestamp/detail`) و محتوای ورودی یا داده حساس حمل نمی‌کنند.
+
+## پیکربندی
+
+| کلید | نوع | الزامی | پیش‌فرض |
+|---|---|---|---|
+| `maxInputChars` | number | خیر | `200000` |
+
+عبور از سقف خطای `MARKDOWN_RENDER_FAILED` می‌دهد، نه برش خاموش.
+
+## قوانین افزونه
+
+- GFM (جدول، تسک‌لیست، strikethrough، اتولینک) همیشه روشن است و قابل خاموش‌کردن نیست.
+- رفتار فارسی فقط وقتی اعمال می‌شود که کالر افزونه را در همان فراخوانی پاس بدهد؛ بدون تزریق، خروجی کاملاً استاندارد است.
+- خروجی همیشه fragment است؛ هیچ `<html>`، تم یا CSS تولید نمی‌شود.
+- همه خروجی‌ها از سانیتایزر عبور می‌کنند؛ هیچ مسیری HTML ضدعفونی‌نشده برنمی‌گرداند.
+- کد فنس‌دار فقط `<pre><code class="language-x">` ساده است؛ هایلایت انجام نمی‌شود.
+- سرویس stateless و سنکرون است؛ هیچ حافظه‌ای بین فراخوانی‌ها نگه نمی‌دارد.
+
+## محدودیت‌ها
+
+- اسمبل سند کامل، تم، روتر و دانلود فایل با مصرف‌کننده است؛ از این افزونه انتظار پوسته `<html>` نداشته باشید.
+- افزونه‌های `syntaxExtensions`/`htmlExtensions` کد اجرایی‌اند؛ فقط افزونه‌های معتبر و قابل‌اعتماد (مثل پارس‌نشان) پاس بدهید، نه ورودی کاربر نهایی.
+- روی ماندن HTML خام سورس در خروجی حساب نکنید؛ رندر پیش‌فرض آن را escape می‌کند و سانیتایزر بقیه را می‌گیرد.
+- این افزونه event منتشر نمی‌کند؛ هماهنگی بعد از رندر (مثلاً به‌روزرسانی UI) با سرویس صداکننده است.
