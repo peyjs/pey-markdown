@@ -2,7 +2,7 @@
 
 [![نسخه](https://img.shields.io/badge/version-1.0.0-blue.svg)](#) [![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE) [![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
 
-افزونه `feature` بنیان (معماری `0.11`) برای تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان در هر فراخوانی.
+افزونه مارک‌داون بخشی از چارچوب پی، پیاده‌سازی‌شده بر پایه معماری بنیان؛ برای تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان در هر فراخوانی.
 
 ## هدف
 
@@ -18,11 +18,13 @@
 
 ## نصب
 
+این بسته هنوز در npm منتشر نشده است؛ پوشه افزونه را در مسیر افزونه‌های پروژه قرار دهید و وابستگی‌ها را نصب کنید:
+
 ```bash
-npm install pey.markdown
+npm install
 ```
 
-ثبت در `bootstrap.json`:
+سپس در `bootstrap.json` ثبت کنید:
 
 ```json
 {
