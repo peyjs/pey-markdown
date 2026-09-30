@@ -10,7 +10,7 @@
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
     "micromark-extension-gfm-autolink-literal": "^2.1.0",
-    "parsneshan": "github:barnevis/parsneshan"
+    "parsneshan": "github:barnevis/parsneshan#v0.1.0"
   },
   "files": [
     "manifest.json",
