@@ -1,0 +1,33 @@
+{
+  "name": "pey.markdown",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "micromark": "^4.0.2",
+    "micromark-extension-gfm": "^3.0.0",
+    "micromark-extension-gfm-autolink-literal": "^2.1.0",
+    "parsneshan": "github:barnevis/parsneshan"
+  },
+  "files": [
+    "manifest.json",
+    "index.js",
+    "lib/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs"
+  ],
+  "keywords": [
+    "pey",
+    "markdown",
+    "micromark",
+    "persian",
+    "farsi",
+    "sanitize"
+  ],
+  "license": "MIT"
+}

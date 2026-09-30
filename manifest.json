@@ -1,0 +1,34 @@
+{
+  "name": "pey.markdown",
+  "version": "1.0.0",
+  "architecture": "0.11",
+  "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
+  "type": "feature",
+  "dependencies": {
+    "required": [],
+    "optional": []
+  },
+  "provides": [
+    {
+      "name": "pey.markdown.service",
+      "description": "Stateless Markdown to sanitized HTML fragment rendering",
+      "methods": [
+        {
+          "name": "renderFragment",
+          "description": "Render Markdown to a sanitized HTML fragment. GFM always on. Persian extensions only when passed per call.",
+          "params": [
+            { "name": "markdown", "type": "string" },
+            { "name": "syntaxExtensions", "type": "MicromarkExtension[] | null" },
+            { "name": "htmlExtensions", "type": "MicromarkHtmlExtension[] | null" }
+          ],
+          "returns": "{ html: string }",
+          "errors": ["MARKDOWN_RENDER_FAILED"]
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "config": {
+    "maxInputChars": 200000
+  }
+}
