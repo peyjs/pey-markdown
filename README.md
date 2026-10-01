@@ -10,7 +10,8 @@
 
 ## ویژگی‌ها
 
-- CommonMark + GFM (جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal، پاورقی با برچسب فارسی) — همیشه روشن.
+- CommonMark + GFM (جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal، پاورقی با برچسب انگلیسی پیش‌فرض) — همیشه روشن.
+- فارسی تزریقی: پاورقی فارسی و افزونه‌های پارس‌نشان فقط وقتی اعمال می‌شوند که کالر بدهد (`footnoteOptions`، ‏`syntaxExtensions`/`htmlExtensions`)؛ بدون تزریق، خروجی کاملاً استاندارد است.
 - لینک `tel:` کار می‌کند؛ schemeهای خطرناک همیشه خنثی می‌شوند.
 - هسته فارسی-اگنوستیک: بدون افزونه تزریقی، خروجی کاملاً استاندارد است.
 - ضدعفونی با فهرست مجاز داخل خود افزونه: `script`، `on*`، `javascript:` و تگ‌های خطرناک هرگز زنده نمی‌مانند.
@@ -76,6 +77,14 @@ const { html } = service.renderFragment({
 const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', idPrefix: 'msg-42' })
 ```
 
+پاورقی فارسی — گپ و ویکی فارسی (UC-2 و UC-3) `footnoteOptions` هم بدهند (نصب `parsneshan` با کالر است، وگرنه import او خطا می‌دهد):
+
+```js
+import { persianFootnoteOptions } from 'parsneshan'
+
+const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', footnoteOptions: persianFootnoteOptions })
+```
+
 ## پیکربندی
 
 | کلید | نوع | الزامی | پیش‌فرض | توضیح |
@@ -100,7 +109,7 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 - **ضروری:** ندارد.
 - **اختیاری:** ندارد.
 
-وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm` و `parsneshan` (پین‌شده به `v0.1.0` از گیت‌هاب، نه npm؛ فقط افزونه تزریقی اختیاری).
+وابستگی‌های npm: `micromark` و `micromark-extension-gfm` (اجباری، نصب خودکار)؛ `parsneshan` فقط وابستگی توسعه است (نسخه مصرفی در تست‌ها `v0.2.0` از گیت‌هاب) — مصرف‌کننده‌ای که برچسب یا افزونه فارسی می‌خواهد خودش آن را نصب می‌کند (از گیت‌هاب، چون روی npm نیست؛ پس نصب به دسترسی گیت‌هاب وابسته است).
 
 ## آزمون‌ها
 

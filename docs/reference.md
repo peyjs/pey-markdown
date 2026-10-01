@@ -9,7 +9,7 @@
 ## ساختار
 
 - `manifest.json` — هویت، سرویس، خطاها، پیکربندی (قرارداد معتبر).
-- `package.json` — بسته ESM با وابستگی‌های `micromark`، `micromark-extension-gfm`، `micromark-extension-gfm-autolink-literal` و `parsneshan`.
+- `package.json` — بسته ESM با وابستگی‌های `micromark` و `micromark-extension-gfm` (و `parsneshan` فقط برای توسعه).
 - `index.js` — نقطه ورود دوفازی بنیان (`prepare`/`activate`).
 - `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
 - `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
@@ -31,7 +31,7 @@
 - **Required:** ندارد.
 - **Optional:** ندارد.
 
-وابستگی‌های npm (در `package.json`، نه سرویس بنیان): `micromark` (موتور رندر)، `micromark-extension-gfm` (جدول، تسک‌لیست، strikethrough، اتولینک و پاورقی)، `parsneshan` (فقط افزونه تزریقی اختیاری per-call؛ هسته بدون آن کاملاً استاندارد کار می‌کند).
+وابستگی‌های npm: `micromark` و `micromark-extension-gfm` اجباری‌اند (نصب خودکار)؛ `parsneshan` فقط وابستگی توسعه است (نسخه مصرفی در تست‌ها `v0.2.0` از گیت‌هاب) — مصرف‌کننده‌ای که برچسب یا افزونه فارسی می‌خواهد خودش آن را نصب می‌کند و چون از گیت‌هاب می‌آید، نصب به دسترسی گیت‌هاب وابسته است. `lib` هیچ‌وقت مستقیم به پارس‌نشان وابسته نیست.
 
 ## API عمومی
 
@@ -58,6 +58,13 @@ const { html } = service.renderFragment({
 const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', idPrefix: 'msg-42' })
 ```
 
+```js
+// پاورقی فارسی (پیش‌فرض انگلیسی است؛ فارسی همیشه تزریقی)
+import { persianFootnoteOptions } from 'parsneshan'
+
+const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', footnoteOptions: persianFootnoteOptions })
+```
+
 ورودی خالی (`''`) fragment تهی (`{ html: '' }`) برمی‌گرداند، نه خطا.
 
 ### استفاده در مرورگر
@@ -76,6 +83,7 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
     "parsneshan/extensions/note": "./vendor/parsneshan/extensions/note/index.js",
     "parsneshan/extensions/persian-list": "./vendor/parsneshan/extensions/persian-list/index.js",
     "parsneshan/extensions/persian-poem": "./vendor/parsneshan/extensions/persian-poem/index.js",
+    "parsneshan/extensions/persian-footnote": "./vendor/parsneshan/extensions/persian-footnote/index.js",
     "micromark": "./vendor/micromark@4.0.3/index.js",
     "micromark-core-commonmark": "./vendor/micromark-core-commonmark@2.0.4/index.js",
     "micromark-extension-gfm": "./vendor/micromark-extension-gfm@3.0.0/index.js",
@@ -111,7 +119,7 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 ```
 
 نکته‌ها:
-- `parsneshan` روی npm نیست؛ checkout همان مخزن را کنار پروژه بگذارید و نگاشت کنید. زیرمسیرهای `extensions/*` را تک‌تک بنویسید: کلید پیشوندی (`parsneshan/`) پسوند `.js` را خودش اضافه نمی‌کند و در مرورگر خطای MIME می‌دهد (با تست واقعی گرفته شد). اگر پارس‌نشان افزونه تازه‌ای اضافه کند، زیرمسیرش را همین‌جا دستی اضافه کنید.
+- `parsneshan` روی npm نیست؛ checkout همان مخزن را کنار پروژه بگذارید و نگاشت کنید. زیرمسیرهای `extensions/*` را تک‌تک بنویسید: کلید پیشوندی (`parsneshan/`) پسوند `.js` را خودش اضافه نمی‌کند و در مرورگر خطای MIME می‌دهد (با تست واقعی گرفته شد). اگر پارس‌نشان افزونه تازه‌ای اضافه کند، زیرمسیرش را همین‌جا دستی اضافه کنید. نگاشت پارس‌نشان فقط برای مصرف‌کننده‌ای لازم است که فارسی می‌خواهد.
 - برای محصول نهایی و آفلاین (Capacitor/Tauri) همین بسته‌ها را با نسخه پین‌شده کنار پروژه (`vendor/`) بگذارید: با قطع اینترنت CDN می‌میرد و نشانی ثابت هم تغییرناپذیری فایل سرور را تضمین نمی‌کند. ساخت پوشه از روی `node_modules` نصب‌شده (تست‌شده):
 ```bash
 mkdir -p vendor
@@ -166,7 +174,7 @@ const { html } = new MarkdownService().renderFragment({ markdown: '# سلام' }
 - GFM (جدول، تسک‌لیست، strikethrough، اتولینک) همیشه روشن است و قابل خاموش‌کردن نیست.
 - رفتار فارسی فقط وقتی اعمال می‌شود که کالر افزونه را در همان فراخوانی پاس بدهد؛ بدون تزریق، خروجی کاملاً استاندارد است.
 - ترتیب ترکیب افزونه‌ها: اول GFM، بعد افزونه‌های کالر به ترتیب آرایه. در تداخل، دیرتر ثبت‌شده می‌برد (construct دیرتر زودتر امتحان می‌شود و هندلر html بازنویسی می‌شود)؛ پس افزونه کالر بر GFM می‌چربد.
-- پاورقی GFM با ساختار کامل و برچسب‌های فارسی (`پاورقی`، `بازگشت به ارجاع N`) حفظ می‌شود؛ رشته‌های فارسی متعلق به پارس‌نشان‌اند (`persianFootnoteOptions`) و این افزونه فقط آن‌ها را به GFM می‌دهد. شناسه‌های ارجاع با `idPrefix` کالر (رشته یا عدد صحیح؛ مثل شناسه پیام) یکتا می‌شوند و بدون آن پایدار می‌مانند ولی در چند fragment یک صفحه تکرار می‌شوند (HTML نامعتبر؛ لینک به اولین مورد می‌پرد). `idPrefix` فقط رشته یا عدد صحیح معمولی با حروف لاتین، رقم و `_ : . -` است (عدد باید چنان باشد که `String(n)` تمیز بماند)؛ شناسه فارسی را کالر باید به شکل لاتین تبدیل کند. تیتر مخفی `footnote-label` در همه fragmentها مشترک است (بی‌ضرر). لینک `tel:` کار می‌کند.
+- پاورقی GFM با ساختار کامل حفظ می‌شود؛ برچسب‌ها پیش‌فرض انگلیسی‌اند و فقط با `footnoteOptions` کالر فارسی می‌شوند (مثل `persianFootnoteOptions` از پارس‌نشان: `پاورقی`، `بازگشت به ارجاع N`). رشته‌های فارسی متعلق به پارس‌نشان‌اند و این افزونه فقط آن‌ها را به GFM می‌دهد. شناسه‌های ارجاع با `idPrefix` کالر (رشته یا عدد صحیح؛ مثل شناسه پیام) یکتا می‌شوند و بدون آن پایدار می‌مانند ولی در چند fragment یک صفحه تکرار می‌شوند (HTML نامعتبر؛ لینک به اولین مورد می‌پرد). `idPrefix` فقط رشته یا عدد صحیح معمولی با حروف لاتین، رقم و `_ : . -` است (عدد باید چنان باشد که `String(n)` تمیز بماند)؛ شناسه فارسی را کالر باید به شکل لاتین تبدیل کند. تیتر مخفی `footnote-label` در همه fragmentها مشترک است (بی‌ضرر). لینک `tel:` کار می‌کند.
 - پیشوند شناسه قابل‌پیش‌بینی است: مهاجم می‌تواند لینک پاورقی پیام‌های دیگر را به عنصر خودش بکشاند (ریسک کم)؛ برای محتوای حساس، `idPrefix` غیرقابل‌حدس بدهید. در حالت نظریِ تبانی کالر و نویسنده (پیشوند `a-fn-b` با برچسب `c` در برابر پیشوند `a` با برچسب `b-fn-c`) شناسه یکسان ساخته می‌شود؛ نادیده‌گرفتنی است.
 - تصاویر خارجی (مطلق `http(s)` با هر شکل اسلش، پروتکل-نسبی `//`، بک‌اسلش، یا مبهم‌سازی‌شده با انتیتی) به‌صورت پیش‌فرض مجازند (آی‌پی بیننده به سایت دیگر می‌رود)؛ با `allowExternalImages: false` فقط نسبی و `data:image` می‌مانند.
 - `id` فقط با پیشوند `user-content-` یا دقیقاً `footnote-label` می‌ماند، `aria-describedby` فقط به `footnote-label` اشاره می‌کند، `aria-label` فقط قالب `بازگشت به ارجاع N` را دارد و `data-footnote-*` فقط تهی می‌ماند — تا HTML خام نتواند آن‌ها را جعل کند.

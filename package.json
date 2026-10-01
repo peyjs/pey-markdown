@@ -20,8 +20,10 @@
   },
   "dependencies": {
     "micromark": "^4.0.2",
-    "micromark-extension-gfm": "^3.0.0",
-    "parsneshan": "github:barnevis/parsneshan#v0.1.0"
+    "micromark-extension-gfm": "^3.0.0"
+  },
+  "devDependencies": {
+    "parsneshan": "git+https://github.com/barnevis/parsneshan.git#v0.2.0"
   },
   "files": [
     "manifest.json",

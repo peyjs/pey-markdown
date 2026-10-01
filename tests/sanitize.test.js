@@ -194,6 +194,13 @@ describe('sanitizeHtml — dangerous content removed', () => {
     )
   })
 
+  it('should_keep_english_back_label_when_fragment_has_gfm_default', () => {
+    assert.equal(
+      sanitizeHtml('<a href="#x" aria-label="Back to reference 1">t</a>'),
+      '<a href="#x" aria-label="Back to reference 1">t</a>',
+    )
+  })
+
   it('should_block_backslash_hosts_when_images_are_restricted', () => {
     const options = { allowExternalImages: false }
 

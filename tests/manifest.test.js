@@ -36,7 +36,7 @@ describe('manifest / code agreement', () => {
     )
     assert.deepEqual(
       service.methods[0].params.map((param) => param.name),
-      ['markdown', 'syntaxExtensions', 'htmlExtensions', 'idPrefix'],
+      ['markdown', 'syntaxExtensions', 'htmlExtensions', 'idPrefix', 'footnoteOptions'],
     )
     assert.deepEqual(
       Object.fromEntries(service.methods[0].params.map((param) => [param.name, param.type])),
@@ -45,6 +45,7 @@ describe('manifest / code agreement', () => {
         syntaxExtensions: 'MicromarkExtension[] | null',
         htmlExtensions: 'MicromarkHtmlExtension[] | null',
         idPrefix: 'string | number | null',
+        footnoteOptions: 'object | null',
       },
     )
   })

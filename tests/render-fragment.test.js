@@ -7,6 +7,7 @@ import assert from 'node:assert/strict'
 
 import MarkdownService from '../lib/markdown-service.js'
 import { ERROR_CODES } from '../lib/constants.js'
+import { persianFootnoteOptions } from 'parsneshan'
 
 /**
  * Build a pair of overlapping single-character syntax extensions: both claim
@@ -306,7 +307,10 @@ describe('renderFragment — footnotes, schemes and images', () => {
   it('should_keep_footnote_intact_when_using_real_renderer_output', () => {
     const service = new MarkdownService()
 
-    const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح' })
+    const { html } = service.renderFragment({
+      markdown: 'متن[^1]\n\n[^1]: توضیح',
+      footnoteOptions: persianFootnoteOptions,
+    })
 
     assert.ok(html.includes('<h2 id="footnote-label" class="sr-only">پاورقی</h2>'), 'Persian heading must survive')
     assert.ok(html.includes('id="user-content-fn-1"'), 'definition id must survive')
@@ -314,6 +318,73 @@ describe('renderFragment — footnotes, schemes and images', () => {
     assert.ok(html.includes('class="data-footnote-backref"'), 'backref class must survive')
     assert.ok(html.includes('aria-label="بازگشت به ارجاع 1"'), 'Persian back label must survive')
     assert.ok(!html.includes('href=""'), 'footnote links must stay live')
+  })
+
+  it('should_render_english_labels_when_no_footnote_options_passed', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: 'text[^1]\n\n[^1]: note' })
+
+    assert.ok(html.includes('>Footnotes</h2>'), 'default heading must be English')
+    assert.ok(html.includes('aria-label="Back to reference 1"'), 'default back label must be English')
+  })
+
+  it('should_apply_no_persian_when_nothing_is_injected', () => {
+    const service = new MarkdownService()
+
+    const plain = service.renderFragment({ markdown: '... هشدار\nx\n...\n' }).html
+    assert.ok(!plain.includes('parsneshan-'), 'no Persian markup without injection')
+
+    const footnote = service.renderFragment({ markdown: 'text[^1]\n\n[^1]: note' }).html
+    assert.ok(!/[\u0600-\u06FF]/.test(footnote), 'no Persian characters without injection')
+  })
+
+  it('should_throw_render_failed_when_footnote_options_is_not_an_object', () => {
+    const service = new MarkdownService()
+
+    for (const footnoteOptions of ['x', 42, []]) {
+      assert.throws(() => service.renderFragment({ markdown: 'hi', footnoteOptions }), (error) => {
+        assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+        return true
+      })
+    }
+  })
+
+  it('should_ignore_clobber_prefix_when_caller_passes_it', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: 't[^1]\n\n[^1]: n',
+      idPrefix: 'm',
+      footnoteOptions: { clobberPrefix: 'evil-' },
+    })
+
+    assert.ok(html.includes('user-content-m-fn-1'), 'only our prefix must appear')
+    assert.ok(!html.includes('evil-'), 'caller clobberPrefix must never win')
+  })
+
+  it('should_drop_aria_label_when_back_label_is_custom_text', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: 't[^1]\n\n[^1]: n',
+      footnoteOptions: { backLabel: () => 'Libre' },
+    })
+
+    assert.ok(!html.includes('aria-label'), 'unsupported back label must lose aria-label')
+    assert.ok(html.includes('data-footnote-backref'), 'backref link itself must stay live')
+  })
+
+  it('should_keep_english_back_label_when_only_heading_is_custom', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({
+      markdown: 't[^1]\n\n[^1]: n',
+      footnoteOptions: { label: 'Notes' },
+    })
+
+    assert.ok(html.includes('>Notes</h2>'), 'custom heading must survive')
+    assert.ok(html.includes('aria-label="Back to reference 1"'), 'default back label must survive')
   })
 
   it('should_render_identically_when_same_input_renders_twice', () => {
