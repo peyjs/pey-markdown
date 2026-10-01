@@ -111,9 +111,17 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 ```
 
 نکته‌ها:
-- `parsneshan` روی npm نیست؛ checkout همان مخزن را کنار پروژه بگذارید و نگاشت کنید. زیرمسیرهای `extensions/*` را تک‌تک بنویسید: کلید پیشوندی (`parsneshan/`) پسوند `.js` را خودش اضافه نمی‌کند و در مرورگر خطای MIME می‌دهد (با تست واقعی گرفته شد).
-- برای محصول نهایی و آفلاین (Capacitor/Tauri) همین بسته‌ها را با نسخه پین‌شده کنار پروژه (`vendor/`) بگذارید: با قطع اینترنت CDN می‌میرد و نشانی ثابت هم تغییرناپذیری فایل سرور را تضمین نمی‌کند.
-- حذف حتی یک نام از map در مرورگر خطای `Failed to resolve module specifier` می‌دهد؛ فهرست بالا کامل و آزمایش‌شده است.
+- `parsneshan` روی npm نیست؛ checkout همان مخزن را کنار پروژه بگذارید و نگاشت کنید. زیرمسیرهای `extensions/*` را تک‌تک بنویسید: کلید پیشوندی (`parsneshan/`) پسوند `.js` را خودش اضافه نمی‌کند و در مرورگر خطای MIME می‌دهد (با تست واقعی گرفته شد). اگر پارس‌نشان افزونه تازه‌ای اضافه کند، زیرمسیرش را همین‌جا دستی اضافه کنید.
+- برای محصول نهایی و آفلاین (Capacitor/Tauri) همین بسته‌ها را با نسخه پین‌شده کنار پروژه (`vendor/`) بگذارید: با قطع اینترنت CDN می‌میرد و نشانی ثابت هم تغییرناپذیری فایل سرور را تضمین نمی‌کند. ساخت پوشه از روی `node_modules` نصب‌شده (تست‌شده):
+```bash
+mkdir -p vendor
+for d in node_modules/micromark*/ node_modules/decode-named-character-reference node_modules/character-entities; do
+  n=$(basename "$d"); v=$(node -p "require('./$d/package.json').version")
+  rm -rf "vendor/$n@$v" && cp -r "$d" "vendor/$n@$v"
+done
+cp -r node_modules/parsneshan vendor/parsneshan
+```
+- نسخه‌های نگاشت پین‌شده‌اند ولی `package.json` بازه می‌دهد (`^`)؛ پس از هر `npm update` نگاشت را با نسخه‌های واقعی `package-lock.json` هماهنگ کنید وگرنه مرورگر و Node دو نسخه متفاوت بارگذاری می‌کنند.
 
 ```js
 import MarkdownService from 'pey.markdown/lib/markdown-service.js'

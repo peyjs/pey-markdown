@@ -1,19 +1,14 @@
-# Changelog — pey.markdown
+# تاریخچه تغییرات — pey.markdown
 
 ## 1.0.0
 
-- Initial release: `renderFragment` (CommonMark + GFM to sanitized HTML fragment).
-- Injectable micromark extensions per call (Persian via `parsneshan`).
-- Allowlist pure-JS sanitizer, no DOM dependency.
-- Standard Bonyan shell: `manifest.json` + two-phase `index.js`, architecture `0.11`, type `feature`.
-- Manifest declares `SERVICE_UNAVAILABLE` alongside `MARKDOWN_RENDER_FAILED` for `renderFragment`.
-- Raw inline/block HTML passes through per CommonMark and is gated by the sanitizer; allowlist extended with `details`, `summary`, `kbd`.
-- Fixed: `&` in URLs double-escaped, `<constructor>`/`<toString>` failed renders, `null` input leaked `TypeError`, unbalanced tags passed through, `SERVICE_UNAVAILABLE` declared in manifest, string `maxInputChars` accepted, `language-c++`/`c#` kept, raw checkboxes forced `disabled`, static error messages, per-prepare lifecycle hooks, linear-time sanitizer, `exports` map.
-- Fixed: dashed tag names misread (`<script-x>` swallowed content, `<a-b>` rewrote as link), non-checkbox `<input>` stayed editable, footnotes mangled, `tel:` broken, worst-case sanitizer input stalled seconds, `parsneshan` in `dependencies` clarified as npm-only, browser bare imports need an import map.
-- Added: `allowExternalImages` config (default `true`), footnote `sup`/`section`/`id`/`data-footnote-*`/`aria-*` allowlist, `tel:` scheme, `engines: node >= 22`, `./manifest.json` export, error `kind` hint, extension order rule documented.
-- Fixed: control-entity scheme smuggling via normalized URI checks, protocol-relative/entity/backslash external images, arbitrary `id`/`aria-describedby` scoping, missing `class` on footnote backref links, Persian footnote labels, redundant autolink-literal dependency removed.
-- Fixed: backslash-host image bypass, later-wins extension precedence documented, per-call footnote id prefix, spoofable `aria-label`/`data-footnote-*` pinned to renderer shapes, direct sanitizer image tests, syntax-overlap test.
-- Changed: deterministic `idPrefix` caller param (string or finite integer, Latin-only) replaces the global footnote counter; `\/` covered as remote; default-id duplication and id-hijack risk documented; `idPrefix` type is `string | number | null`.
-- Docs: browser import map sample, `sr-only` CSS sample; exact-output attack tests for `style` element, `javascript:` href and `data:text/html` image.
-- Fixed: wiki path-style `idPrefix` example, huge-integer and empty-input validation order, manifest param types asserted, theoretical id-collision note.
-- Changed: `idPrefix` caller param replaces the global footnote counter (deterministic output); backslash-folded external check covers `\/`; footnote id hijack risk documented.
+- متد `renderFragment`: تبدیل Markdown استاندارد + GFM (جدول، تسک‌لیست، strikethrough، اتولینک، پاورقی) به HTML fragment ضدعفونی‌شده.
+- هسته فارسی-اگنوستیک با افزونه‌های تزریقی micromark در هر فراخوانی (فارسی با `parsneshan`؛ ترتیب: دیرتر ثبت‌شده می‌برد).
+- سانیتایزر رشته‌ای خالص با فهرست مجاز و اسکن خطی: تگ‌های مجاز می‌مانند، بقیه باز می‌شوند، `script`/`style` هرگز زنده نمی‌مانند؛ URIها روی مقدار نرمال‌شده سنجیده می‌شوند.
+- HTML خام طبق CommonMark عبور می‌کند؛ تگ نامتوازن خودکار بسته می‌شود.
+- لینک `tel:` کار می‌کند؛ schemeهای خطرناک همیشه خنثی می‌شوند.
+- پاورقی با ساختار کامل و برچسب‌های فارسی؛ شناسه‌ها با `idPrefix` اختیاری کالر یکتا و بدون آن پایدار و تکرارپذیرند.
+- پیکربندی `maxInputChars` (پیش‌فرض `200000`) و `allowExternalImages` (پیش‌فرض `true`).
+- خطاهای استاندارد بنیان (`MARKDOWN_RENDER_FAILED`، `SERVICE_UNAVAILABLE`) بدون نشت محتوای ورودی.
+- پوسته استاندارد بنیان: `manifest.json` + ورودی دوفازی `index.js`، معماری `0.11`.
+- بسته ESM بدون باندلر با نگاشت `exports`؛ نیازمند Node بالای ۲۲ برای اجرای تست‌ها.
