@@ -29,6 +29,7 @@
   ],
   "events": [],
   "config": {
-    "maxInputChars": 200000
+    "maxInputChars": 200000,
+    "allowExternalImages": true
   }
 }

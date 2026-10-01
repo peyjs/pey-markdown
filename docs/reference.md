@@ -20,6 +20,7 @@
 - `tests/entry.test.js` — تست‌های نقطه ورود دوفازی.
 - `tests/parsneshan-injection.test.js` — تست‌های تزریق افزونه‌های فارسی.
 - `tests/service-errors.test.js` — تست‌های قرارداد خطا.
+- `tests/manifest.test.js` — تست‌های هماهنگی منیفست با کد.
 - `docs/requirements.md` — نیازمندی‌های پایه و مبنای پذیرش.
 - `docs/reference.md` — همین سند.
 - `README.md` — معرفی کوتاه و ارجاع به همین سند.
@@ -30,7 +31,7 @@
 - **Required:** ندارد.
 - **Optional:** ندارد.
 
-وابستگی‌های npm (در `package.json`، نه سرویس بنیان): `micromark` (موتور رندر)، `micromark-extension-gfm` و `micromark-extension-gfm-autolink-literal` (جدول، تسک‌لیست، strikethrough، اتولینک)، `parsneshan` (فقط افزونه تزریقی اختیاری per-call؛ هسته بدون آن کاملاً استاندارد کار می‌کند).
+وابستگی‌های npm (در `package.json`، نه سرویس بنیان): `micromark` (موتور رندر)، `micromark-extension-gfm` (جدول، تسک‌لیست، strikethrough، اتولینک و پاورقی)، `parsneshan` (فقط افزونه تزریقی اختیاری per-call؛ هسته بدون آن کاملاً استاندارد کار می‌کند).
 
 ## API عمومی
 
@@ -73,6 +74,7 @@ const { html } = service.renderFragment({
 | کلید | نوع | الزامی | پیش‌فرض |
 |---|---|---|---|
 | `maxInputChars` | number | خیر | `200000` |
+| `allowExternalImages` | boolean | خیر | `true` |
 
 عبور از سقف خطای `MARKDOWN_RENDER_FAILED` می‌دهد، نه برش خاموش.
 
@@ -80,6 +82,9 @@ const { html } = service.renderFragment({
 
 - GFM (جدول، تسک‌لیست، strikethrough، اتولینک) همیشه روشن است و قابل خاموش‌کردن نیست.
 - رفتار فارسی فقط وقتی اعمال می‌شود که کالر افزونه را در همان فراخوانی پاس بدهد؛ بدون تزریق، خروجی کاملاً استاندارد است.
+- ترتیب ترکیب افزونه‌ها: اول GFM، بعد افزونه‌های کالر به ترتیب آرایه؛ در تداخل، اولویت با micromark است.
+- پاورقی GFM با ساختار کامل حفظ می‌شود؛ لینک `tel:` کار می‌کند.
+- تصاویر خارجی به‌صورت پیش‌فرض مجازند (آی‌پی بیننده به سایت دیگر می‌رود)؛ با `allowExternalImages: false` فقط نسبی و `data:image` می‌مانند.
 - خروجی همیشه fragment است؛ هیچ `<html>`، تم یا CSS تولید نمی‌شود.
 - همه خروجی‌ها از سانیتایزر عبور می‌کنند؛ هیچ مسیری HTML ضدعفونی‌نشده برنمی‌گرداند.
 - HTML خام سورس (بلوکی و درون‌خطی) مطابق CommonMark عبور می‌کند و سپس ضدعفونی می‌شود: تگ مجاز می‌ماند، تگ نامجاز باز می‌شود (محتوایش می‌ماند) و `script`/`style` هرگز زنده نمی‌مانند (حذف با محتوا یا escape رندر).

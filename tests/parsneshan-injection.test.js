@@ -119,15 +119,19 @@ describe('parsneshan injection — composition and safety', () => {
 
   it('should_combine_extensions_when_order_is_reversed', () => {
     const service = new MarkdownService()
-
-    const { html } = service.renderFragment({
-      markdown: '... هشدار\nتوجه\n...\n\n۱. الف\n۲. ب\n',
+    const markdown = '... هشدار\nتوجه\n...\n\n۱. الف\n۲. ب\n'
+    const first = service.renderFragment({
+      markdown,
+      syntaxExtensions: [warning(), persianListExtension()],
+      htmlExtensions: [warningHtml(), persianListHtml()],
+    }).html
+    const second = service.renderFragment({
+      markdown,
       syntaxExtensions: [persianListExtension(), warning()],
       htmlExtensions: [persianListHtml(), warningHtml()],
-    })
+    }).html
 
-    assert.ok(html.includes('<div class="parsneshan-warning">'), 'warning must render in any order')
-    assert.ok(html.includes('<ol'), 'list must render in any order')
+    assert.equal(second, first, 'disjoint extensions must render identically in any order')
   })
 
   it('should_sanitize_output_when_injected_content_has_script', () => {

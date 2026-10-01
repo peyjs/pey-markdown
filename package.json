@@ -5,11 +5,15 @@
   "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
   "exports": {
     ".": "./index.js",
+    "./manifest.json": "./manifest.json",
     "./lib/markdown-service.js": "./lib/markdown-service.js",
     "./lib/sanitize.js": "./lib/sanitize.js",
     "./lib/error.js": "./lib/error.js",
     "./lib/constants.js": "./lib/constants.js",
     "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test tests/*.test.js"
@@ -17,7 +21,6 @@
   "dependencies": {
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
-    "micromark-extension-gfm-autolink-literal": "^2.1.0",
     "parsneshan": "github:barnevis/parsneshan#v0.1.0"
   },
   "files": [

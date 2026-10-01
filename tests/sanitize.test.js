@@ -139,11 +139,38 @@ describe('sanitizeHtml — dangerous content removed', () => {
     assert.equal(sanitizeHtml('<input type="checkbox">'), '<input type="checkbox" disabled>')
   })
 
+  it('should_keep_footnote_markup_when_fragment_has_footnotes', () => {
+    const html = '<p>a<sup><a href="#fn-1" id="fr-1" data-footnote-ref="" aria-describedby="fl">1</a></sup></p>'
+      + '<section data-footnotes="" class="footnotes">'
+      + '<h2 id="fl" class="sr-only">F</h2>'
+      + '<ol><li id="fn-1"><p>t <a href="#fr-1" data-footnote-backref="" aria-label="Back">x</a></p></li></ol>'
+      + '</section>'
+
+    assert.equal(sanitizeHtml(html), html)
+  })
+
+  it('should_unwrap_dashed_tags_when_names_have_suffixes', () => {
+    assert.equal(sanitizeHtml('<script-x>hello'), 'hello')
+    assert.equal(sanitizeHtml('<a-b>hi</a-b>'), 'hi')
+    assert.equal(sanitizeHtml('<pre-x>hi</pre-x>'), 'hi')
+  })
+
+  it('should_drop_input_when_type_is_not_checkbox', () => {
+    assert.equal(sanitizeHtml('<p><input></p>'), '<p></p>')
+    assert.equal(sanitizeHtml('<p><input type="text"></p>'), '<p></p>')
+  })
+
+  it('should_normalize_checkbox_when_type_uses_uppercase', () => {
+    assert.equal(sanitizeHtml('<input type="CHECKBOX">'), '<input type="checkbox" disabled>')
+  })
+
   it('should_finish_quickly_when_input_is_adversarial', () => {
     const start = Date.now()
     sanitizeHtml('<!--'.repeat(66666))
     sanitizeHtml('<a '.repeat(50000))
     sanitizeHtml(`<div>${'x'.repeat(150000)}`)
+    sanitizeHtml(`${'<a '.repeat(40000)}">`)
+    sanitizeHtml('<a title="x> <b>'.repeat(20000))
 
     assert.ok(Date.now() - start < 5000, 'adversarial input must not stall')
   })

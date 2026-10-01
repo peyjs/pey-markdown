@@ -74,6 +74,7 @@ const { html } = service.renderFragment({
 | کلید | نوع | الزامی | پیش‌فرض | توضیح |
 |---|---|---|---|---|
 | `maxInputChars` | عدد | خیر | `200000` | سقف طول ورودی هر فراخوانی؛ عبور از آن خطای `MARKDOWN_RENDER_FAILED` می‌دهد |
+| `allowExternalImages` | بولی | خیر | `true` | با `false`، تصویر مطلق خارجی حذف می‌شود (حریم آی‌پی بیننده) |
 
 ## ساختار
 
@@ -84,7 +85,7 @@ const { html } = service.renderFragment({
 - `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
 - `lib/sanitize.js` — سانیتایزر رشته‌ای خالص با فهرست مجاز (بدون DOM).
 - `lib/markdown-service.js` — سرویس رندر `renderFragment`؛ بدون حالت و سنکرون.
-- `tests/` — تست `node:test` به‌ازای هر فایل سورس (۵ فایل).
+- `tests/` — تست `node:test` به‌ازای هر فایل سورس (۶ فایل).
 - `docs/` — `requirements.md` (نیازمندی‌های پایه) و `reference.md` (مرجع کامل).
 
 ## وابستگی‌ها
@@ -92,7 +93,7 @@ const { html } = service.renderFragment({
 - **ضروری:** ندارد.
 - **اختیاری:** ندارد.
 
-وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm`، `micromark-extension-gfm-autolink-literal` و `parsneshan` (پین‌شده به `v0.1.0`؛ فقط افزونه تزریقی اختیاری).
+وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm` و `parsneshan` (پین‌شده به `v0.1.0`؛ فقط افزونه تزریقی اختیاری).
 
 ## آزمون‌ها
 
@@ -100,7 +101,7 @@ const { html } = service.renderFragment({
 npm test
 ```
 
-۸۱ تست سبز: رندر CommonMark/GFM و HTML خام، سانیتایزر و XSS و پرفورمنس، تزریق پارس‌نشان، قرارداد خطا، نقطه ورود دوفازی و هماهنگی منیفست.
+۹۱ تست سبز: رندر CommonMark/GFM، پاورقی و HTML خام، سانیتایزر و XSS و پرفورمنس، تزریق پارس‌نشان، قرارداد خطا، نقطه ورود دوفازی و هماهنگی منیفست.
 
 ## مستندات
 

@@ -44,7 +44,7 @@ describe('error builders', () => {
   it('should_keep_detail_safe_when_mapping_raw_error', () => {
     const error = mapError(new Error('boom'), 'renderFragment')
 
-    assert.deepEqual(error.detail, { context: 'renderFragment' })
+    assert.deepEqual(error.detail, { context: 'renderFragment', kind: 'Error' })
   })
 
   it('should_carry_no_user_content_when_extension_throws_with_input', () => {

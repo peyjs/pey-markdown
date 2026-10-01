@@ -234,3 +234,60 @@ describe('renderFragment — error path', () => {
     })
   })
 })
+
+describe('renderFragment — footnotes, schemes and images', () => {
+  it('should_render_footnotes_when_markdown_has_footnote_syntax', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح' })
+
+    assert.ok(html.includes('data-footnotes'), 'footnote section must survive')
+    assert.ok(html.includes('data-footnote-backref'), 'backref must survive')
+    assert.ok(!html.includes('href=""'), 'footnote links must stay live')
+  })
+
+  it('should_keep_tel_link_when_markdown_has_tel_scheme', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '[call](tel:+123)' })
+
+    assert.ok(html.includes('href="tel:+123"'), 'tel: link must work')
+  })
+
+  it('should_neutralize_dangerous_schemes_when_protocol_is_risky', () => {
+    const service = new MarkdownService()
+
+    for (const scheme of ['javascript', 'vbscript', 'file']) {
+      const { html } = service.renderFragment({ markdown: `[x](${scheme}:alert(1))` })
+
+      assert.ok(!html.includes(`${scheme}:`), `${scheme}: must not survive`)
+    }
+  })
+
+  it('should_strip_external_src_when_images_are_restricted', () => {
+    const service = new MarkdownService({ allowExternalImages: false })
+
+    const blocked = service.renderFragment({ markdown: '![a](https://e.test/x.png)' }).html
+    const local = service.renderFragment({ markdown: '![a](/local/x.png)' }).html
+
+    assert.ok(!blocked.includes('https://e.test'), 'external src must go')
+    assert.ok(blocked.includes('alt="a"'), 'alt text must stay')
+    assert.ok(local.includes('src="/local/x.png"'), 'relative src must stay')
+  })
+
+  it('should_unwrap_dashed_tags_when_source_has_suffix_names', () => {
+    const service = new MarkdownService()
+
+    assert.equal(service.renderFragment({ markdown: '<script-x>hello' }).html, '<p>hello</p>')
+  })
+
+  it('should_render_hostile_mix_when_input_is_near_limit', () => {
+    const service = new MarkdownService()
+    const hostile = `<!--${'x'.repeat(10000)}\n<a \n<div><p>unclosed\n<a href="&#106;avascript:alert(1)">x</a>\n`
+
+    const { html } = service.renderFragment({ markdown: hostile })
+
+    assert.ok(!html.includes('<script'), 'no live dangerous tag')
+    assert.ok(!html.includes('javascript:'), 'no dangerous scheme')
+  })
+})
