@@ -119,8 +119,9 @@ for d in node_modules/micromark*/ node_modules/decode-named-character-reference 
   n=$(basename "$d"); v=$(node -p "require('./$d/package.json').version")
   rm -rf "vendor/$n@$v" && cp -r "$d" "vendor/$n@$v"
 done
-cp -r node_modules/parsneshan vendor/parsneshan
+rm -rf vendor/parsneshan && cp -r node_modules/parsneshan vendor/parsneshan
 ```
+(فقط bash در لینوکس و مک؛ در ویندوز از WSL یا Git Bash استفاده کنید.)
 - نسخه‌های نگاشت پین‌شده‌اند ولی `package.json` بازه می‌دهد (`^`)؛ پس از هر `npm update` نگاشت را با نسخه‌های واقعی `package-lock.json` هماهنگ کنید وگرنه مرورگر و Node دو نسخه متفاوت بارگذاری می‌کنند.
 
 ```js

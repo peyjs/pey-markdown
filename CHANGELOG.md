@@ -11,4 +11,4 @@
 - پیکربندی `maxInputChars` (پیش‌فرض `200000`) و `allowExternalImages` (پیش‌فرض `true`).
 - خطاهای استاندارد بنیان (`MARKDOWN_RENDER_FAILED`، `SERVICE_UNAVAILABLE`) بدون نشت محتوای ورودی.
 - پوسته استاندارد بنیان: `manifest.json` + ورودی دوفازی `index.js`، معماری `0.11`.
-- بسته ESM بدون باندلر با نگاشت `exports`؛ نیازمند Node بالای ۲۲ برای اجرای تست‌ها.
+- بسته ESM بدون باندلر با نگاشت `exports`؛ نیازمند Node ۲۲ یا بالاتر برای اجرای تست‌ها.
