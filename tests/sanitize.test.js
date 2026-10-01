@@ -165,13 +165,33 @@ describe('sanitizeHtml — dangerous content removed', () => {
   })
 
   it('should_keep_footnote_markup_when_fragment_has_footnotes', () => {
-    const html = '<p>a<sup><a href="#user-content-fn-1" id="user-content-fnref-1" data-footnote-ref="" aria-describedby="footnote-label">1</a></sup></p>'
+    const html = '<p>a<sup><a href="#user-content-7-fn-1" id="user-content-7-fnref-1" data-footnote-ref="" aria-describedby="footnote-label">1</a></sup></p>'
       + '<section data-footnotes="" class="footnotes">'
       + '<h2 id="footnote-label" class="sr-only">F</h2>'
-      + '<ol><li id="user-content-fn-1"><p>t <a href="#user-content-fnref-1" data-footnote-backref="" aria-label="Back" class="data-footnote-backref">x</a></p></li></ol>'
+      + '<ol><li id="user-content-7-fn-1"><p>t <a href="#user-content-7-fnref-1" data-footnote-backref="" aria-label="بازگشت به ارجاع 1" class="data-footnote-backref">x</a></p></li></ol>'
       + '</section>'
 
     assert.equal(sanitizeHtml(html), html)
+  })
+
+  it('should_drop_spoofed_accessible_names_when_raw_html_fakes_them', () => {
+    assert.equal(sanitizeHtml('<a href="/x" aria-label="Bank login">t</a>'), '<a href="/x">t</a>')
+    assert.equal(sanitizeHtml('<a href="/x" data-footnote-ref="evil">t</a>'), '<a href="/x">t</a>')
+    assert.equal(
+      sanitizeHtml('<a href="/x" data-footnote-ref>t</a>'),
+      '<a href="/x" data-footnote-ref>t</a>',
+    )
+  })
+
+  it('should_block_backslash_hosts_when_images_are_restricted', () => {
+    const options = { allowExternalImages: false }
+
+    for (const src of ['http:/x.com/a.png', '/\\x.com/a.png', '\\\\x.com/a.png', '&#104;ttps://x.com/a.png']) {
+      const out = sanitizeHtml(`<img src="${src}" alt="a">`, options)
+
+      assert.ok(!out.includes('x.com'), `external src must go: ${src}`)
+      assert.ok(out.includes('alt="a"'), 'alt text must stay')
+    }
   })
 
   it('should_unwrap_dashed_tags_when_names_have_suffixes', () => {

@@ -8,6 +8,35 @@ import assert from 'node:assert/strict'
 import MarkdownService from '../lib/markdown-service.js'
 import { ERROR_CODES } from '../lib/constants.js'
 
+/**
+ * Build a pair of overlapping single-character syntax extensions: both claim
+ * '!' but render different tags, so precedence is observable.
+ *
+ * @param {string} token — token name
+ * @param {string} tag — rendered tag name
+ * @returns {{ syntax: object, html: object }} extension pair
+ */
+function makeBangExtension(token, tag) {
+  return {
+    syntax: {
+      text: {
+        33: [{
+          tokenize(effects, ok) {
+            effects.enter(token)
+            effects.consume(33)
+            effects.exit(token)
+            return ok
+          },
+        }],
+      },
+    },
+    html: {
+      enter: { [token]() { this.tag(`<${tag}>`) } },
+      exit: { [token]() { this.tag(`</${tag}>`) } },
+    },
+  }
+}
+
 describe('renderFragment — CommonMark success path', () => {
   it('should_render_heading_and_emphasis_when_markdown_has_basic_blocks', () => {
     const service = new MarkdownService()
@@ -280,11 +309,26 @@ describe('renderFragment — footnotes, schemes and images', () => {
     const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح' })
 
     assert.ok(html.includes('<h2 id="footnote-label" class="sr-only">پاورقی</h2>'), 'Persian heading must survive')
-    assert.ok(html.includes('id="user-content-fn-1"'), 'definition id must survive')
-    assert.ok(html.includes('id="user-content-fnref-1"'), 'reference id must survive')
+    assert.ok(/id="user-content-\d+-fn-1"/.test(html), 'unique definition id must survive')
+    assert.ok(/id="user-content-\d+-fnref-1"/.test(html), 'unique reference id must survive')
     assert.ok(html.includes('class="data-footnote-backref"'), 'backref class must survive')
     assert.ok(html.includes('aria-label="بازگشت به ارجاع 1"'), 'Persian back label must survive')
     assert.ok(!html.includes('href=""'), 'footnote links must stay live')
+  })
+
+  it('should_prefix_footnote_ids_when_rendering_twice', () => {
+    const service = new MarkdownService()
+    const markdown = 'متن[^1]\n\n[^1]: توضیح'
+
+    const first = service.renderFragment({ markdown }).html
+    const second = service.renderFragment({ markdown }).html
+
+    const idsOf = (html) => [...html.matchAll(/user-content-(\d+)-fn-1"/g)].map((match) => match[1])
+    const [firstCounter] = idsOf(first)
+    const [secondCounter] = idsOf(second)
+
+    assert.ok(firstCounter !== undefined && secondCounter !== undefined, 'both renders must carry prefixed ids')
+    assert.notEqual(secondCounter, firstCounter, 'each call must use a fresh prefix')
   })
 
   it('should_block_protocol_relative_when_images_are_restricted', () => {
@@ -304,6 +348,30 @@ describe('renderFragment — footnotes, schemes and images', () => {
     assert.ok(!html.includes('site.com'), 'obfuscated external src must go')
   })
 
+  it('should_resolve_locally_when_images_are_restricted', () => {
+    const service = new MarkdownService({ allowExternalImages: false })
+    const sources = [
+      'http:/s.com/x.png',
+      '//s.com/x.png',
+      '\\\\s.com/x.png',
+      '/\\\\s.com/x.png',
+      '&#104;ttps://s.com/x.png',
+      '/local/x.png',
+      'data:image/png;base64,AAA',
+    ]
+    for (const src of sources) {
+      const { html } = service.renderFragment({ markdown: `![a](${src})` })
+      const match = html.match(/src="([^"]*)"/)
+      if (!match) continue
+      const resolved = new URL(match[1], 'https://host/page')
+
+      assert.ok(
+        resolved.hostname === 'host' || resolved.protocol === 'data:',
+        `must stay local: ${src} resolved to ${resolved.href}`,
+      )
+    }
+  })
+
   it('should_prefer_later_extension_when_html_handlers_overlap', () => {
     const service = new MarkdownService()
     const first = { enter: { strong() { this.tag('<del>') } }, exit: { strong() { this.tag('</del>') } } }
@@ -312,6 +380,16 @@ describe('renderFragment — footnotes, schemes and images', () => {
     const { html } = service.renderFragment({ markdown: '**x**', htmlExtensions: [first, second] })
 
     assert.ok(html.includes('<s>x</s>'), 'later html handler must win')
+  })
+
+  it('should_prefer_later_extension_when_syntax_constructs_overlap', () => {
+    const service = new MarkdownService()
+    const first = makeBangExtension('tagFirst', 'del')
+    const second = makeBangExtension('tagSecond', 's')
+
+    const { html } = service.renderFragment({ markdown: 'hi!x', syntaxExtensions: [first.syntax, second.syntax], htmlExtensions: [first.html, second.html] })
+
+    assert.ok(html.includes('<s></s>'), 'later syntax construct must win')
   })
 
   it('should_strip_external_src_when_images_are_restricted', () => {
