@@ -18,31 +18,31 @@
 
 ## نصب
 
-این بسته هنوز در npm منتشر نشده است؛ پوشه افزونه را در مسیر افزونه‌های پروژه قرار دهید و وابستگی‌ها را نصب کنید:
+این بسته هنوز در npm منتشر نشده است؛ پوشه افزونه را در مسیر افزونه‌های پروژه قرار دهید و وابستگی‌ها را **داخل همان پوشه** نصب کنید (`npm install` در ریشه پروژه، `package.json` داخل پوشه افزونه را نصب نمی‌کند):
 
 ```bash
-npm install
+cd plugins/pey.markdown && npm install
 ```
 
-سپس در `bootstrap.json` ثبت کنید:
+سپس در `bootstrap.json` ثبت کنید (مثل نمونه‌های سند معماری، `path` با `./` شروع می‌شود):
 
 ```json
 {
   "plugins": [
-    { "name": "pey.markdown", "version": "1.0.0", "path": "plugins/pey.markdown" }
+    { "name": "pey.markdown", "version": "1.0.0", "path": "./plugins/pey.markdown" }
   ],
   "config": {
-    "pey.markdown": { "maxInputChars": 200000 }
+    "pey.markdown": { "maxInputChars": 200000, "allowExternalImages": true }
   }
 }
 ```
 
 ## شروع سریع
 
-استفاده از سرویس (داخل بنیان، پس از `core:ready`):
+استفاده از سرویس (داخل بنیان، پس از `core:ready` — مصرف‌کننده رفرنس سرویس را از Core می‌گیرد، نه مستقیم از Registry که هیچ پلاگین و UI به آن دسترسی ندارد):
 
 ```js
-const service = /* pey.markdown.service از رجیستری */
+// service: رفرنس `pey.markdown.service` که Core به مصرف‌کننده داده است
 const { html } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
 ```
 
@@ -55,7 +55,7 @@ const service = new MarkdownService()
 const { html } = service.renderFragment({ markdown: '- [x] انجام شد' })
 ```
 
-> نکته مرورگر: import با نام ساده در مرورگر بدون باندلر به import map نیاز دارد (مثلاً `"pey.markdown/"` به مسیر افزونه و `"micromark"` به CDN)؛ در Node کافی است وابستگی‌ها نصب شده باشند.
+> نکته مرورگر: import با نام ساده در مرورگر بدون باندلر به import map کامل نیاز دارد؛ نمونه کوتاه بالا برای مرورگر کافی نیست — نگاشت کامل و تأییدشده در بخش «استفاده در مرورگر» در [`docs/reference.md`](./docs/reference.md#استفاده-در-مرورگر) است.
 
 رندر با افزونه فارسی پارس‌نشان (کالر افزونه را می‌دهد، سرویس فقط ترکیب می‌کند):
 
@@ -93,13 +93,15 @@ const { html } = service.renderFragment({
 - **ضروری:** ندارد.
 - **اختیاری:** ندارد.
 
-وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm` و `parsneshan` (پین‌شده به `v0.1.0`؛ فقط افزونه تزریقی اختیاری).
+وابستگی‌های npm (در `package.json`): `micromark`، `micromark-extension-gfm` و `parsneshan` (پین‌شده به `v0.1.0` از گیت‌هاب، نه npm؛ فقط افزونه تزریقی اختیاری).
 
 ## آزمون‌ها
 
 ```bash
 npm test
 ```
+
+اجرای تست‌ها به Node ۲۲ یا بالاتر نیاز دارد (به‌خاطر import attribute در تست‌ها) و همین حداقل در `engines` کل بسته هم اعلام شده است؛ منطق خود سرویس به API جدیدتری وابسته نیست.
 
 ۱۱۰ تست سبز: رندر CommonMark/GFM، پاورقی و HTML خام، سانیتایزر و XSS و پرفورمنس، تزریق پارس‌نشان، قرارداد خطا، نقطه ورود دوفازی و هماهنگی منیفست.
 
