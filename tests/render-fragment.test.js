@@ -309,26 +309,42 @@ describe('renderFragment — footnotes, schemes and images', () => {
     const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح' })
 
     assert.ok(html.includes('<h2 id="footnote-label" class="sr-only">پاورقی</h2>'), 'Persian heading must survive')
-    assert.ok(/id="user-content-\d+-fn-1"/.test(html), 'unique definition id must survive')
-    assert.ok(/id="user-content-\d+-fnref-1"/.test(html), 'unique reference id must survive')
+    assert.ok(html.includes('id="user-content-fn-1"'), 'definition id must survive')
+    assert.ok(html.includes('id="user-content-fnref-1"'), 'reference id must survive')
     assert.ok(html.includes('class="data-footnote-backref"'), 'backref class must survive')
     assert.ok(html.includes('aria-label="بازگشت به ارجاع 1"'), 'Persian back label must survive')
     assert.ok(!html.includes('href=""'), 'footnote links must stay live')
   })
 
-  it('should_prefix_footnote_ids_when_rendering_twice', () => {
+  it('should_render_identically_when_same_input_renders_twice', () => {
     const service = new MarkdownService()
     const markdown = 'متن[^1]\n\n[^1]: توضیح'
 
     const first = service.renderFragment({ markdown }).html
     const second = service.renderFragment({ markdown }).html
 
-    const idsOf = (html) => [...html.matchAll(/user-content-(\d+)-fn-1"/g)].map((match) => match[1])
-    const [firstCounter] = idsOf(first)
-    const [secondCounter] = idsOf(second)
+    assert.equal(second, first, 'same input must render byte-identically (cacheable)')
+  })
 
-    assert.ok(firstCounter !== undefined && secondCounter !== undefined, 'both renders must carry prefixed ids')
-    assert.notEqual(secondCounter, firstCounter, 'each call must use a fresh prefix')
+  it('should_scope_footnote_ids_when_idPrefix_is_passed', () => {
+    const service = new MarkdownService()
+    const markdown = 'متن[^1]\n\n[^1]: توضیح'
+
+    const { html } = service.renderFragment({ markdown, idPrefix: 'msg-42' })
+
+    assert.ok(html.includes('id="user-content-msg-42-fn-1"'), 'scoped definition id must survive')
+    assert.ok(!html.includes('user-content-fn-1"'), 'unscoped ids must be gone')
+  })
+
+  it('should_throw_render_failed_when_idPrefix_is_not_id_safe', () => {
+    const service = new MarkdownService()
+
+    for (const idPrefix of ['', 'a b', 'x"y', 42]) {
+      assert.throws(() => service.renderFragment({ markdown: 'hi', idPrefix }), (error) => {
+        assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+        return true
+      })
+    }
   })
 
   it('should_block_protocol_relative_when_images_are_restricted', () => {
@@ -386,10 +402,18 @@ describe('renderFragment — footnotes, schemes and images', () => {
     const service = new MarkdownService()
     const first = makeBangExtension('tagFirst', 'del')
     const second = makeBangExtension('tagSecond', 's')
+    const markdown = 'hi!x'
 
-    const { html } = service.renderFragment({ markdown: 'hi!x', syntaxExtensions: [first.syntax, second.syntax], htmlExtensions: [first.html, second.html] })
+    const aloneFirst = service.renderFragment({ markdown, syntaxExtensions: [first.syntax], htmlExtensions: [first.html] }).html
+    const aloneSecond = service.renderFragment({ markdown, syntaxExtensions: [second.syntax], htmlExtensions: [second.html] }).html
+    assert.ok(aloneFirst.includes('<del></del>'), 'first construct must work alone')
+    assert.ok(aloneSecond.includes('<s></s>'), 'second construct must work alone')
 
-    assert.ok(html.includes('<s></s>'), 'later syntax construct must win')
+    const firstWins = service.renderFragment({ markdown, syntaxExtensions: [second.syntax, first.syntax], htmlExtensions: [second.html, first.html] }).html
+    const secondWins = service.renderFragment({ markdown, syntaxExtensions: [first.syntax, second.syntax], htmlExtensions: [first.html, second.html] }).html
+
+    assert.ok(secondWins.includes('<s></s>'), 'later syntax construct must win')
+    assert.ok(firstWins.includes('<del></del>'), 'reversed order must flip the winner')
   })
 
   it('should_strip_external_src_when_images_are_restricted', () => {

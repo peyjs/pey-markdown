@@ -34,6 +34,10 @@ describe('manifest / code agreement', () => {
       service.methods[0].errors.sort(),
       [ERROR_CODES.MARKDOWN_RENDER_FAILED, ERROR_CODES.SERVICE_UNAVAILABLE].sort(),
     )
+    assert.deepEqual(
+      service.methods[0].params.map((param) => param.name),
+      ['markdown', 'syntaxExtensions', 'htmlExtensions', 'idPrefix'],
+    )
   })
 
   it('should_match_default_config_when_manifest_config_is_compared_to_code', () => {

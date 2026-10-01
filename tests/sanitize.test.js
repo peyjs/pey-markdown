@@ -186,7 +186,7 @@ describe('sanitizeHtml — dangerous content removed', () => {
   it('should_block_backslash_hosts_when_images_are_restricted', () => {
     const options = { allowExternalImages: false }
 
-    for (const src of ['http:/x.com/a.png', '/\\x.com/a.png', '\\\\x.com/a.png', '&#104;ttps://x.com/a.png']) {
+    for (const src of ['http:/x.com/a.png', '/\\x.com/a.png', '\\\\x.com/a.png', '\\/x.com/a.png', '&#104;ttps://x.com/a.png']) {
       const out = sanitizeHtml(`<img src="${src}" alt="a">`, options)
 
       assert.ok(!out.includes('x.com'), `external src must go: ${src}`)

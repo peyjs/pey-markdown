@@ -15,11 +15,12 @@
       "methods": [
         {
           "name": "renderFragment",
-          "description": "Render Markdown to a sanitized HTML fragment. GFM always on. Persian extensions only when passed per call.",
+          "description": "Render Markdown to a sanitized HTML fragment. GFM always on. Persian extensions only when passed per call. Footnote ids scoped by optional idPrefix.",
           "params": [
             { "name": "markdown", "type": "string" },
             { "name": "syntaxExtensions", "type": "MicromarkExtension[] | null" },
-            { "name": "htmlExtensions", "type": "MicromarkHtmlExtension[] | null" }
+            { "name": "htmlExtensions", "type": "MicromarkHtmlExtension[] | null" },
+            { "name": "idPrefix", "type": "string | null" }
           ],
           "returns": "{ html: string }",
           "errors": ["MARKDOWN_RENDER_FAILED", "SERVICE_UNAVAILABLE"]

@@ -56,6 +56,7 @@
 - **FR-9:** HTML خام سورس (بلوکی و درون‌خطی) مطابق CommonMark عبور کند و سپس ضدعفونی شود: تگ مجاز (`details`/`summary`/`kbd` و بقیه فهرست مجاز) بماند، تگ نامجاز باز شود و `script`/`style` هرگز زنده نمانند (حذف با محتوا یا escape رندر).
 - **FR-10:** پاورقی GFM (`[^1]` با تعریف) با ساختار کامل (ارجاع، بخش، بازگشت) حفظ شود؛ لینک‌های آن زنده بمانند.
 - **FR-11:** لینک `tel:` کار کند؛ schemeهای `javascript:`/`vbscript:`/`file:` و `data:text/html` همیشه خنثی شوند.
+- **FR-12:** پارامتر اختیاری `idPrefix` دامنه شناسه‌های پاورقی باشد (مثل شناسه پیام) تا لینک‌ها در یک صفحه مشترک یکتا بمانند؛ بدون آن، خروجی پایدار و تکرارپذیر است و ورودی یکسان همیشه خروجی یکسان می‌دهد.
 
 ## ۵. نیازمندی‌های غیرکارکردی
 
@@ -75,7 +76,7 @@
 ## ۷. قرارداد API (خلاصه؛ متن کامل در manifest)
 
 - سرویس: `pey.markdown.service` — متد: `renderFragment`.
-- ورودی: `markdown: string` (الزامی)، `syntaxExtensions?: MicromarkExtension[] | null`، `htmlExtensions?: MicromarkHtmlExtension[] | null`.
+- ورودی: `markdown: string` (الزامی)، `syntaxExtensions?: MicromarkExtension[] | null`، `htmlExtensions?: MicromarkHtmlExtension[] | null`، `idPrefix?: string | null` (دامنه شناسه پاورقی).
 - خروجی: `{ html: string }`.
 - مثال تنها:
   ```js
