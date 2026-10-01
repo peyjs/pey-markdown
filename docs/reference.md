@@ -60,6 +60,35 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 
 ورودی خالی (`''`) fragment تهی (`{ html: '' }`) برمی‌گرداند، نه خطا.
 
+### استفاده در مرورگر
+
+نام‌های ساده (`micromark` و …) در مرورگر بدون باندلر به import map نیاز دارند. `parsneshan` روی npm نیست، پس به checkout محلی همان مخزن نگاشت می‌شود:
+
+```json
+{
+  "imports": {
+    "micromark": "https://esm.sh/micromark@4.0.3",
+    "micromark-extension-gfm": "https://esm.sh/micromark-extension-gfm@3.0.0",
+    "pey.markdown/lib/markdown-service.js": "./plugins/pey.markdown/lib/markdown-service.js",
+    "parsneshan": "./vendor/parsneshan/index.js"
+  }
+}
+```
+
+```js
+import MarkdownService from 'pey.markdown/lib/markdown-service.js'
+
+const { html } = new MarkdownService().renderFragment({ markdown: '# سلام' })
+```
+
+### CSS تیتر پاورقی
+
+تیتر پاورقی کلاس `sr-only` دارد ولی شیوه‌نامه همراهش نیست؛ مصرف‌کننده خودش می‌دهد، وگرنه تیتر نمایان می‌ماند:
+
+```css
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+```
+
 ## رویدادها
 
 - منتشر می‌کند: هیچی (`events: []`).

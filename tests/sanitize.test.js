@@ -71,10 +71,7 @@ describe('sanitizeHtml — dangerous content removed', () => {
   })
 
   it('should_neutralize_href_when_link_uses_javascript_uri', () => {
-    const out = sanitizeHtml('<a href="javascript:alert(1)">x</a>')
-
-    assert.ok(!out.includes('javascript:'), 'javascript: URI must not survive')
-    assert.ok(out.includes('>x</a>'), 'link text must be preserved')
+    assert.equal(sanitizeHtml('<a href="javascript:alert(1)">x</a>'), '<a href="#">x</a>')
   })
 
   it('should_remove_iframe_when_fragment_has_embedded_frame', () => {
@@ -95,9 +92,11 @@ describe('sanitizeHtml — dangerous content removed', () => {
   })
 
   it('should_drop_image_when_src_uses_data_text_html', () => {
-    const out = sanitizeHtml('<img src="data:text/html,<script>alert(1)</script>">')
+    assert.equal(sanitizeHtml('<img src="data:text/html,<script>alert(1)</script>">'), '<img>')
+  })
 
-    assert.ok(!out.includes('data:text/html'), 'data:text/html must not survive')
+  it('should_remove_style_with_content_when_fragment_has_style_element', () => {
+    assert.equal(sanitizeHtml('<style>p{color:red}</style><p>t</p>'), '<p>t</p>')
   })
 
   it('should_escape_entity_when_href_uses_entity_obfuscation', () => {
