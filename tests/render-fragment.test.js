@@ -347,6 +347,15 @@ describe('renderFragment — footnotes, schemes and images', () => {
     }
   })
 
+  it('should_throw_render_failed_when_empty_input_has_invalid_idPrefix', () => {
+    const service = new MarkdownService()
+
+    assert.throws(() => service.renderFragment({ markdown: '', idPrefix: 'a b' }), (error) => {
+      assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
+      return true
+    })
+  })
+
   it('should_coerce_integer_when_idPrefix_is_numeric', () => {
     const service = new MarkdownService()
 

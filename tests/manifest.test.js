@@ -38,6 +38,15 @@ describe('manifest / code agreement', () => {
       service.methods[0].params.map((param) => param.name),
       ['markdown', 'syntaxExtensions', 'htmlExtensions', 'idPrefix'],
     )
+    assert.deepEqual(
+      Object.fromEntries(service.methods[0].params.map((param) => [param.name, param.type])),
+      {
+        markdown: 'string',
+        syntaxExtensions: 'MicromarkExtension[] | null',
+        htmlExtensions: 'MicromarkHtmlExtension[] | null',
+        idPrefix: 'string | number | null',
+      },
+    )
   })
 
   it('should_match_default_config_when_manifest_config_is_compared_to_code', () => {
