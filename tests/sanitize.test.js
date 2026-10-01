@@ -95,6 +95,18 @@ describe('sanitizeHtml — dangerous content removed', () => {
     assert.equal(sanitizeHtml('<img src="data:text/html,<script>alert(1)</script>">'), '<img>')
   })
 
+  it('should_neutralize_link_when_href_uses_data_text_html', () => {
+    assert.equal(sanitizeHtml('<p><a href="data:text/html,<b>x</b>">t</a></p>'), '<p><a href="#">t</a></p>')
+  })
+
+  it('should_drop_to_end_when_script_is_never_closed', () => {
+    assert.equal(sanitizeHtml('<p>a</p><script>alert(1)'), '<p>a</p>')
+  })
+
+  it('should_neutralize_nested_evasion_when_script_tags_overlap', () => {
+    assert.equal(sanitizeHtml('<scr<script>ipt>alert(1)</scr<script>ipt>'), '&lt;scr')
+  })
+
   it('should_remove_style_with_content_when_fragment_has_style_element', () => {
     assert.equal(sanitizeHtml('<style>p{color:red}</style><p>t</p>'), '<p>t</p>')
   })
@@ -216,7 +228,7 @@ describe('sanitizeHtml — dangerous content removed', () => {
     sanitizeHtml(`${'<a '.repeat(40000)}">`)
     sanitizeHtml('<a title="x> <b>'.repeat(20000))
 
-    assert.ok(Date.now() - start < 5000, 'adversarial input must not stall')
+    assert.ok(Date.now() - start < 1000, 'adversarial input must not stall')
   })
 })
 
