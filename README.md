@@ -1,6 +1,8 @@
 # pey.markdown
 
-[![نسخه](https://img.shields.io/badge/version-1.0.0-blue.svg)](#) [![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE) [![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
+[![نسخه](https://img.shields.io/badge/version-1.0.0-blue.svg)](#)
+[![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
 
 افزونه مارک‌داون بخشی از چارچوب پی، پیاده‌سازی‌شده بر پایه معماری بنیان؛ برای تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان در هر فراخوانی.
 
@@ -11,7 +13,7 @@
 ## ویژگی‌ها
 
 - CommonMark + GFM (جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal، پاورقی با برچسب انگلیسی پیش‌فرض) — همیشه روشن.
-- فارسی تزریقی: پاورقی فارسی و افزونه‌های پارس‌نشان فقط وقتی اعمال می‌شوند که کالر بدهد (`footnoteOptions`، ‏`syntaxExtensions`/`htmlExtensions`)؛ بدون تزریق، خروجی کاملاً استاندارد است.
+- فارسی تزریقی: پاورقی فارسی و افزونه‌های پارس‌نشان فقط وقتی اعمال می‌شوند که کالر بدهد (`footnoteOptions`، `syntaxExtensions`/`htmlExtensions`)؛ بدون تزریق، خروجی کاملاً استاندارد است.
 - لینک `tel:` کار می‌کند؛ schemeهای خطرناک همیشه خنثی می‌شوند.
 - هسته فارسی-اگنوستیک: بدون افزونه تزریقی، خروجی کاملاً استاندارد است.
 - ضدعفونی با فهرست مجاز داخل خود افزونه: `script`، `on*`، `javascript:` و تگ‌های خطرناک هرگز زنده نمی‌مانند.
