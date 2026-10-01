@@ -264,6 +264,56 @@ describe('renderFragment — footnotes, schemes and images', () => {
     }
   })
 
+  it('should_neutralize_control_entity_when_href_hides_scheme_behind_it', () => {
+    const service = new MarkdownService()
+
+    for (const href of ['&#1;javascript:alert(1)', '&#x1;javascript:alert(1)', 'javascript&#58alert(1)']) {
+      const { html } = service.renderFragment({ markdown: `<a href="${href}">x</a>` })
+
+      assert.ok(!html.includes('javascript'), `control/entity smuggling must not survive: ${href}`)
+    }
+  })
+
+  it('should_keep_footnote_intact_when_using_real_renderer_output', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح' })
+
+    assert.ok(html.includes('<h2 id="footnote-label" class="sr-only">پاورقی</h2>'), 'Persian heading must survive')
+    assert.ok(html.includes('id="user-content-fn-1"'), 'definition id must survive')
+    assert.ok(html.includes('id="user-content-fnref-1"'), 'reference id must survive')
+    assert.ok(html.includes('class="data-footnote-backref"'), 'backref class must survive')
+    assert.ok(html.includes('aria-label="بازگشت به ارجاع 1"'), 'Persian back label must survive')
+    assert.ok(!html.includes('href=""'), 'footnote links must stay live')
+  })
+
+  it('should_block_protocol_relative_when_images_are_restricted', () => {
+    const service = new MarkdownService({ allowExternalImages: false })
+
+    const { html } = service.renderFragment({ markdown: '![a](//site.com/x.png)' })
+
+    assert.ok(!html.includes('//site.com'), 'protocol-relative src must go')
+    assert.ok(html.includes('alt="a"'), 'alt text must stay')
+  })
+
+  it('should_block_entity_http_when_images_are_restricted', () => {
+    const service = new MarkdownService({ allowExternalImages: false })
+
+    const { html } = service.renderFragment({ markdown: '![a](&#104;ttps://site.com/x.png)' })
+
+    assert.ok(!html.includes('site.com'), 'obfuscated external src must go')
+  })
+
+  it('should_prefer_later_extension_when_html_handlers_overlap', () => {
+    const service = new MarkdownService()
+    const first = { enter: { strong() { this.tag('<del>') } }, exit: { strong() { this.tag('</del>') } } }
+    const second = { enter: { strong() { this.tag('<s>') } }, exit: { strong() { this.tag('</s>') } } }
+
+    const { html } = service.renderFragment({ markdown: '**x**', htmlExtensions: [first, second] })
+
+    assert.ok(html.includes('<s>x</s>'), 'later html handler must win')
+  })
+
   it('should_strip_external_src_when_images_are_restricted', () => {
     const service = new MarkdownService({ allowExternalImages: false })
 

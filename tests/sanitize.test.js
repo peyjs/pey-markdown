@@ -107,6 +107,31 @@ describe('sanitizeHtml — dangerous content removed', () => {
     assert.ok(out.includes('>x</a>'), 'link text must be preserved')
   })
 
+  it('should_neutralize_control_entity_when_href_hides_scheme_behind_it', () => {
+    for (const href of ['&#1;javascript:alert(1)', '&#x1;javascript:alert(1)', 'javascript&#58alert(1)', 'java&#9;script:alert(1)']) {
+      const out = sanitizeHtml(`<p><a href="${href}">x</a></p>`)
+
+      assert.ok(!out.includes('javascript'), `control/entity smuggling must not survive: ${href}`)
+      assert.ok(out.includes('href="#"'), 'dangerous href must fall back to #')
+    }
+  })
+
+  it('should_drop_arbitrary_id_when_id_is_not_footnote_scoped', () => {
+    assert.equal(sanitizeHtml('<h2 id="evil" class="sr-only">t</h2>'), '<h2 class="sr-only">t</h2>')
+    assert.equal(
+      sanitizeHtml('<h2 id="user-content-fn-1" class="sr-only">t</h2>'),
+      '<h2 id="user-content-fn-1" class="sr-only">t</h2>',
+    )
+  })
+
+  it('should_pin_describedby_when_aria_references_non_footnote_id', () => {
+    assert.equal(sanitizeHtml('<a href="#x" aria-describedby="evil">t</a>'), '<a href="#x">t</a>')
+    assert.equal(
+      sanitizeHtml('<a href="#x" aria-describedby="footnote-label">t</a>'),
+      '<a href="#x" aria-describedby="footnote-label">t</a>',
+    )
+  })
+
   it('should_drop_case_variant_tags_when_script_uses_mixed_case', () => {
     assert.equal(sanitizeHtml('<ScRiPt>alert(1)</ScRiPt><p>t</p>'), '<p>t</p>')
   })
@@ -140,10 +165,10 @@ describe('sanitizeHtml — dangerous content removed', () => {
   })
 
   it('should_keep_footnote_markup_when_fragment_has_footnotes', () => {
-    const html = '<p>a<sup><a href="#fn-1" id="fr-1" data-footnote-ref="" aria-describedby="fl">1</a></sup></p>'
+    const html = '<p>a<sup><a href="#user-content-fn-1" id="user-content-fnref-1" data-footnote-ref="" aria-describedby="footnote-label">1</a></sup></p>'
       + '<section data-footnotes="" class="footnotes">'
-      + '<h2 id="fl" class="sr-only">F</h2>'
-      + '<ol><li id="fn-1"><p>t <a href="#fr-1" data-footnote-backref="" aria-label="Back">x</a></p></li></ol>'
+      + '<h2 id="footnote-label" class="sr-only">F</h2>'
+      + '<ol><li id="user-content-fn-1"><p>t <a href="#user-content-fnref-1" data-footnote-backref="" aria-label="Back" class="data-footnote-backref">x</a></p></li></ol>'
       + '</section>'
 
     assert.equal(sanitizeHtml(html), html)
