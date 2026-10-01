@@ -339,12 +339,29 @@ describe('renderFragment — footnotes, schemes and images', () => {
   it('should_throw_render_failed_when_idPrefix_is_not_id_safe', () => {
     const service = new MarkdownService()
 
-    for (const idPrefix of ['', 'a b', 'x"y', 42]) {
+    for (const idPrefix of ['', 'a b', 'x"y', 'پیام', 1.5, NaN, Infinity, true]) {
       assert.throws(() => service.renderFragment({ markdown: 'hi', idPrefix }), (error) => {
         assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
         return true
       })
     }
+  })
+
+  it('should_coerce_integer_when_idPrefix_is_numeric', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: 'x[^1]\n\n[^1]: y', idPrefix: 42 })
+
+    assert.ok(html.includes('id="user-content-42-fn-1"'), 'numeric prefix must scope ids')
+  })
+
+  it('should_keep_percent_ids_when_footnote_label_is_persian', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: 'متن[^توضیح]\n\n[^توضیح]: شرح' })
+
+    assert.ok(html.includes('id="user-content-fn-%D8%AA%D9%88%D8%B6%DB%8C%D8%AD"'), 'percent id must survive')
+    assert.ok(!html.includes('href=""'), 'percent links must stay live')
   })
 
   it('should_block_protocol_relative_when_images_are_restricted', () => {
@@ -378,7 +395,10 @@ describe('renderFragment — footnotes, schemes and images', () => {
     for (const src of sources) {
       const { html } = service.renderFragment({ markdown: `![a](${src})` })
       const match = html.match(/src="([^"]*)"/)
-      if (!match) continue
+      if (!match) {
+        assert.ok(!html.includes('s.com'), `dropped src must leave no host behind: ${src}`)
+        continue
+      }
       const resolved = new URL(match[1], 'https://host/page')
 
       assert.ok(

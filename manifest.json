@@ -20,7 +20,7 @@
             { "name": "markdown", "type": "string" },
             { "name": "syntaxExtensions", "type": "MicromarkExtension[] | null" },
             { "name": "htmlExtensions", "type": "MicromarkHtmlExtension[] | null" },
-            { "name": "idPrefix", "type": "string | null" }
+            { "name": "idPrefix", "type": "string | number | null" }
           ],
           "returns": "{ html: string }",
           "errors": ["MARKDOWN_RENDER_FAILED", "SERVICE_UNAVAILABLE"]

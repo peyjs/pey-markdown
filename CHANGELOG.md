@@ -13,4 +13,5 @@
 - Added: `allowExternalImages` config (default `true`), footnote `sup`/`section`/`id`/`data-footnote-*`/`aria-*` allowlist, `tel:` scheme, `engines: node >= 22`, `./manifest.json` export, error `kind` hint, extension order rule documented.
 - Fixed: control-entity scheme smuggling via normalized URI checks, protocol-relative/entity/backslash external images, arbitrary `id`/`aria-describedby` scoping, missing `class` on footnote backref links, Persian footnote labels, redundant autolink-literal dependency removed.
 - Fixed: backslash-host image bypass, later-wins extension precedence documented, per-call footnote id prefix, spoofable `aria-label`/`data-footnote-*` pinned to renderer shapes, direct sanitizer image tests, syntax-overlap test.
+- Changed: deterministic `idPrefix` caller param (string or finite integer, Latin-only) replaces the global footnote counter; `\/` covered as remote; default-id duplication and id-hijack risk documented; `idPrefix` type is `string | number | null`.
 - Changed: `idPrefix` caller param replaces the global footnote counter (deterministic output); backslash-folded external check covers `\/`; footnote id hijack risk documented.
