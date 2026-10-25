@@ -46,7 +46,7 @@
 
 ## ۴. نیازمندی‌های کارکردی
 
-- **FR-1:** متد `renderFragment({ markdown, syntaxExtensions?, htmlExtensions?, footnoteOptions?, idPrefix? })` شیء `{ html, toc }` برگرداند؛ `html` همیشه fragment باشد، نه سند کامل؛ `toc` آرایهٔ `[{ id, level, text }]` به‌ترتیب سند (مشخصات در FR-13).
+- **FR-1:** متد `renderFragment({ markdown, syntaxExtensions?, htmlExtensions?, idPrefix?, footnoteOptions? })` شیء `{ html, toc }` برگرداند؛ `html` همیشه fragment باشد، نه سند کامل؛ `toc` آرایهٔ `[{ id, level, text }]` به‌ترتیب سند (مشخصات در FR-13).
 - **FR-2:** بدون افزونه تزریقی، خروجی دقیقاً CommonMark + GFM باشد: پاراگراف، عنوان، لیست، blockquote، جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal.
 - **FR-3:** هسته فارسی-اگنوستیک باشد: بدون `syntaxExtensions`/`htmlExtensions`/`footnoteOptions` هیچ رفتار فارسی اعمال نشود؛ متن `... هشدار` در این حالت پاراگراف معمولی بماند و برچسب پاورقی انگلیسی باشد.
 - **FR-4:** وقتی کالر افزونه‌های پارس‌نشان را پاس می‌دهد، رفتار همان افزونه‌ها عیناً حفظ شود: بلوک‌های `هشدار/احتیاط/مهم/راهنما/نکته` با `<div class="parsneshan-*">`، لیست فارسی با `start` درست، شعر با ساختار بیت/مصرع.
