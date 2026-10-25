@@ -1,6 +1,6 @@
 {
   "name": "pey.markdown",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "architecture": "0.11",
   "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
   "type": "feature",
@@ -15,7 +15,7 @@
       "methods": [
         {
           "name": "renderFragment",
-          "description": "Render Markdown to a sanitized HTML fragment. GFM always on. Persian extensions only when passed per call. Footnote labels standard English unless footnoteOptions are passed; footnote ids scoped by optional idPrefix.",
+          "description": "Render Markdown to a sanitized HTML fragment. GFM always on. Persian extensions only when passed per call. Footnote labels standard English unless footnoteOptions are passed; footnote and heading ids scoped by optional idPrefix. Every h1-h6 heading gets a stable plugin-built id (user-content-h-<slug>, non-ASCII percent-encoded) and the returned toc array carries exactly the ids applied in the html.",
           "params": [
             { "name": "markdown", "type": "string" },
             { "name": "syntaxExtensions", "type": "MicromarkExtension[] | null" },
@@ -23,7 +23,7 @@
             { "name": "idPrefix", "type": "string | number | null" },
             { "name": "footnoteOptions", "type": "object | null" }
           ],
-          "returns": "{ html: string }",
+          "returns": "{ html: string, toc: Array<{ id: string, level: number, text: string }> }",
           "errors": ["MARKDOWN_RENDER_FAILED", "SERVICE_UNAVAILABLE"]
         }
       ]

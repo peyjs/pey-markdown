@@ -135,6 +135,18 @@ describe('sanitizeHtml — dangerous content removed', () => {
     )
   })
 
+  it('should_keep_heading_ids_when_value_is_user_content_scoped', () => {
+    assert.equal(
+      sanitizeHtml('<h1 id="user-content-h-a">a</h1><h3 id="user-content-h-%D9%85">b</h3><h6 id="user-content-h-c">c</h6>'),
+      '<h1 id="user-content-h-a">a</h1><h3 id="user-content-h-%D9%85">b</h3><h6 id="user-content-h-c">c</h6>',
+    )
+  })
+
+  it('should_drop_heading_id_when_value_is_not_user_content_scoped', () => {
+    assert.equal(sanitizeHtml('<h1 id="evil">a</h1>'), '<h1>a</h1>')
+    assert.equal(sanitizeHtml('<h4 id="user-content-h-ب">a</h4>'), '<h4>a</h4>')
+  })
+
   it('should_pin_describedby_when_aria_references_non_footnote_id', () => {
     assert.equal(sanitizeHtml('<a href="#x" aria-describedby="evil">t</a>'), '<a href="#x">t</a>')
     assert.equal(

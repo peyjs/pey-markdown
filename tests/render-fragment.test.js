@@ -44,7 +44,7 @@ describe('renderFragment — CommonMark success path', () => {
 
     const { html } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم** و *کج*' })
 
-    assert.ok(html.includes('<h1>سلام</h1>'), 'heading must render')
+    assert.ok(html.includes('<h1 id="user-content-h-%D8%B3%D9%84%D8%A7%D9%85">سلام</h1>'), 'heading must render with a stable id')
     assert.ok(html.includes('<strong>مهم</strong>'), 'strong must render')
     assert.ok(html.includes('<em>کج</em>'), 'emphasis must render')
   })
@@ -87,7 +87,7 @@ describe('renderFragment — CommonMark success path', () => {
   it('should_return_empty_fragment_when_markdown_is_empty', () => {
     const service = new MarkdownService()
 
-    assert.deepEqual(service.renderFragment({ markdown: '' }), { html: '' })
+    assert.deepEqual(service.renderFragment({ markdown: '' }), { html: '', toc: [] })
   })
 })
 
@@ -173,6 +173,70 @@ describe('renderFragment — raw HTML passthrough', () => {
     })
 
     assert.ok(html.includes('<div class="parsneshan-note">'), 'safe raw div must pass through')
+  })
+})
+
+describe('renderFragment — heading ids and toc', () => {
+  it('should_return_toc_matching_html_when_document_has_headings', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## Install\n\nمتن' })
+
+    assert.deepEqual(toc, [
+      { id: 'user-content-h-%D9%85%D9%82%D8%AF%D9%85%D9%87', level: 1, text: 'مقدمه' },
+      { id: 'user-content-h-install', level: 2, text: 'Install' },
+    ])
+    for (const entry of toc) {
+      assert.ok(html.includes(`id="${entry.id}"`), `toc id must be applied in html: ${entry.id}`)
+    }
+  })
+
+  it('should_id_setext_headings_when_markdown_uses_underlines', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: 'Title\n=====\n\nSub\n---' })
+
+    assert.ok(html.includes('<h1 id="user-content-h-title">Title</h1>'))
+    assert.ok(html.includes('<h2 id="user-content-h-sub">Sub</h2>'))
+    assert.deepEqual(toc.map((entry) => entry.level), [1, 2])
+  })
+
+  it('should_scope_heading_ids_when_idPrefix_is_passed', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: '## Install', idPrefix: 'msg-42' })
+
+    assert.ok(html.includes('id="user-content-msg-42-h-install"'), 'scoped heading id must survive')
+    assert.ok(!html.includes('"user-content-h-install"'), 'unscoped heading id must be gone')
+    assert.equal(toc[0].id, 'user-content-msg-42-h-install')
+  })
+
+  it('should_exclude_footnote_heading_when_footnotes_render', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: '## Install\n\ntext[^1]\n\n[^1]: note' })
+
+    assert.ok(html.includes('<h2 id="footnote-label" class="sr-only">'), 'footnote heading must stay untouched')
+    assert.deepEqual(toc.map((entry) => entry.text), ['Install'])
+  })
+
+  it('should_replace_attacker_id_when_raw_heading_carries_one', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: '<h2 id="evil">raw</h2>' })
+
+    assert.ok(!html.includes('evil'), 'caller-supplied heading id must be replaced')
+    assert.ok(html.includes('<h2 id="user-content-h-raw">'), 'plugin id must be applied')
+    assert.equal(toc[0].id, 'user-content-h-raw')
+  })
+
+  it('should_keep_toc_empty_when_headings_only_live_in_code_fences', () => {
+    const service = new MarkdownService()
+
+    const { html, toc } = service.renderFragment({ markdown: '```\n# not a heading\n```' })
+
+    assert.deepEqual(toc, [])
+    assert.ok(html.includes('# not a heading'), 'fenced line must stay escaped text')
   })
 })
 

@@ -1,6 +1,6 @@
 # pey.markdown
 
-[![نسخه](https://img.shields.io/badge/version-1.0.0-blue.svg)](#)
+[![نسخه](https://img.shields.io/badge/version-1.1.0-blue.svg)](#)
 [![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
 
@@ -8,11 +8,12 @@
 
 ## هدف
 
-یک ورودی Markdown، یک خروجی HTML fragment امن — بدون پوسته سند، بدون تم، بدون منطق UI. هر چهار مصرف چارچوب پی (دانلود HTML در ویرایشگر، ویکی شبیه docsify، پیام‌های گپ، صفحات وبگاه) فقط همین یک متد را صدا می‌زنند و پوسته را خودشان می‌سازند.
+یک ورودی Markdown، یک خروجی HTML fragment امن — بدون پوسته سند، بدون تم، بدون منطق UI. هر چهار مصرف چارچوب پی (دانلود HTML در ویرایشگر، ویکی شبیه docsify، پیام‌های گپ، صفحات وبگاه) فقط همین یک متد را صدا می‌زنند و پوسته را خودشان می‌سازند؛ تیترها شناسهٔ پایدار می‌گیرند و فهرست‌مطالب/anchor از `toc` برگشتی ساخته می‌شود.
 
 ## ویژگی‌ها
 
 - CommonMark + GFM (جدول، تسک‌لیست، strikethrough، اتولینک استاندارد و literal، پاورقی با برچسب انگلیسی پیش‌فرض) — همیشه روشن.
+- شناسهٔ پایدار تیترهای `h1`–`h6` در خود HTML (`user-content-h-<slug>` با همان دامنهٔ `idPrefix`) و آرایهٔ `toc: [{id, level, text}]` که دقیقاً همان شناسه‌ها را برمی‌گرداند — تنها slugger داخل افزونه است؛ تیتر فارسی قطعی و درصد-انکد و امن در URL hash.
 - فارسی تزریقی: پاورقی فارسی و افزونه‌های پارس‌نشان فقط وقتی اعمال می‌شوند که کالر بدهد (`footnoteOptions`، `syntaxExtensions`/`htmlExtensions`)؛ بدون تزریق، خروجی کاملاً استاندارد است.
 - لینک `tel:` کار می‌کند؛ schemeهای خطرناک همیشه خنثی می‌شوند.
 - هسته فارسی-اگنوستیک: بدون افزونه تزریقی، خروجی کاملاً استاندارد است.
@@ -33,7 +34,7 @@ cd plugins/pey.markdown && npm install
 ```json
 {
   "plugins": [
-    { "name": "pey.markdown", "version": "1.0.0", "path": "./plugins/pey.markdown" }
+    { "name": "pey.markdown", "version": "1.1.0", "path": "./plugins/pey.markdown" }
   ],
   "config": {
     "pey.markdown": { "maxInputChars": 200000, "allowExternalImages": true }
@@ -47,7 +48,8 @@ cd plugins/pey.markdown && npm install
 
 ```js
 // service: رفرنس `pey.markdown.service` که Core به مصرف‌کننده داده است
-const { html } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
+const { html, toc } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
+// toc: [{ id: 'user-content-h-%D8%B3%D9%84%D8%A7%D9%85', level: 1, text: 'سلام' }]
 ```
 
 استفاده مستقل از `lib` (بیرون بنیان — ویکی ساده، رندر جزئی، تست):
@@ -102,8 +104,9 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 - `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
 - `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
 - `lib/sanitize.js` — سانیتایزر رشته‌ای خالص با فهرست مجاز (بدون DOM).
+- `lib/heading-ids.js` — شناسهٔ پایدار تیترها و آرایهٔ `toc` (تنها slugger).
 - `lib/markdown-service.js` — سرویس رندر `renderFragment`؛ بدون حالت و سنکرون.
-- `tests/` — تست `node:test` به‌ازای هر فایل سورس (۶ فایل).
+- `tests/` — تست `node:test` به‌ازای هر فایل سورس (۷ فایل).
 - `docs/` — `requirements.md` (نیازمندی‌های پایه) و `reference.md` (مرجع کامل).
 
 ## وابستگی‌ها

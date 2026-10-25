@@ -51,7 +51,7 @@ describe('pey.markdown entry point', () => {
 
       const { html } = services[0].object.renderFragment({ markdown: '# hi' })
 
-      assert.ok(html.includes('<h1>hi</h1>'))
+      assert.ok(html.includes('<h1 id="user-content-h-hi">hi</h1>'))
     })
 
     it('should_apply_config_limit_when_prepare_receives_custom_maxInputChars', async () => {
@@ -140,7 +140,7 @@ describe('pey.markdown entry point', () => {
         return true
       })
       const { html } = secondServices[0].object.renderFragment({ markdown: '# hi' })
-      assert.ok(html.includes('<h1>hi</h1>'), 'second service must stay usable')
+      assert.ok(html.includes('<h1 id="user-content-h-hi">hi</h1>'), 'second service must stay usable')
     })
   })
 

@@ -48,6 +48,10 @@ describe('manifest / code agreement', () => {
         footnoteOptions: 'object | null',
       },
     )
+    assert.equal(
+      service.methods[0].returns,
+      '{ html: string, toc: Array<{ id: string, level: number, text: string }> }',
+    )
   })
 
   it('should_match_default_config_when_manifest_config_is_compared_to_code', () => {

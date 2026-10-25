@@ -1,6 +1,6 @@
 {
   "name": "pey.markdown",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
   "exports": {
@@ -8,6 +8,7 @@
     "./manifest.json": "./manifest.json",
     "./lib/markdown-service.js": "./lib/markdown-service.js",
     "./lib/sanitize.js": "./lib/sanitize.js",
+    "./lib/heading-ids.js": "./lib/heading-ids.js",
     "./lib/error.js": "./lib/error.js",
     "./lib/constants.js": "./lib/constants.js",
     "./package.json": "./package.json"
