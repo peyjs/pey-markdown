@@ -7,7 +7,7 @@ import assert from 'node:assert/strict'
 
 import MarkdownService from '../lib/markdown-service.js'
 import { ERROR_CODES } from '../lib/constants.js'
-import { buildRenderError, buildServiceUnavailable, mapError } from '../lib/error.js'
+import { BonyanError, buildRenderError, buildServiceUnavailable, mapError } from '../lib/error.js'
 
 /**
  * Assert the standard Bonyan error structure.
@@ -17,6 +17,8 @@ import { buildRenderError, buildServiceUnavailable, mapError } from '../lib/erro
  * @param {string} type — expected type
  */
 function assertStandardError(error, code, type) {
+  assert.ok(error instanceof Error, 'boundary errors must be real Error instances (stack, instanceof)')
+  assert.ok(error instanceof BonyanError, 'boundary errors must use the plugin error class')
   assert.equal(error.code, code)
   assert.equal(error.source, 'pey.markdown')
   assert.equal(error.type, type)

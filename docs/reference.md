@@ -12,9 +12,14 @@
 - `package.json` — بسته ESM با وابستگی‌های `micromark` و `micromark-extension-gfm` (و `parsneshan` فقط برای توسعه).
 - `index.js` — نقطه ورود دوفازی بنیان (`prepare`/`activate`).
 - `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
-- `lib/error.js` — سازنده‌های خطای استاندارد بنیان.
-- `lib/sanitize.js` — سانیتایزر allowlist رشته‌ای خالص (بدون DOM).
-- `lib/heading-ids.js` — ساخت شناسهٔ پایدار تیترهای `h1`–`h6` و آرایهٔ `toc` (تنها slugger؛ قبل از ضدعفونی).
+- `lib/error.js` — سازنده‌های خطای استاندارد بنیان (`BonyanError extends Error`).
+- `lib/html-text.js` — رمزگشای انتیتی، توکن‌ساز اتریبیوت و escape اتریبیوت (مشترک میان سانیتایزر و تزریق شناسه).
+- `lib/sanitize.js` — ماشین حالت اصلی سانیتایزر allowlist رشته‌ای خالص (بدون DOM).
+- `lib/sanitize-state.js` — گام‌های ماشین حالت تگ (تجزیه سر تگ، مونتاژ، راه‌رفت حذف زیردرخت).
+- `lib/sanitize-policy.js` — جدول‌های سیاست: تگ‌ها/اتریبیوت‌های مجاز، الگوهای کلاس و id.
+- `lib/sanitize-attributes.js` — فیلتر اتریبیوت‌ها با مقادیر امن.
+- `lib/sanitize-uri.js` — سیاست امنیتی `href`/`src` روی URI نرمال‌شده.
+- `lib/heading-ids.js` — ساخت شناسهٔ پایدار تیترهای `h1`–`h6` و آرایهٔ `toc` (تنها slugger؛ قبل از ضدعفونی؛ پرش زیردرخت حذف با همان راه‌رفت سانیتایزر).
 - `lib/markdown-service.js` — سرویس رندر (`renderFragment`)؛ stateless و سنکرون.
 - `tests/sanitize.test.js` — تست‌های سانیتایزر.
 - `tests/heading-ids.test.js` — تست‌های شناسه تیتر و toc.

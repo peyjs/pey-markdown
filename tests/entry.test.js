@@ -2,9 +2,9 @@
 // (prepare / activate) per Bonyan architecture 0.11.
 //
 // Strategy: no adapter and no dependencies, so no module mocking is needed.
-// Each test calls prepare() with its own context first; module-level closure
-// state (savedContext/serviceRef) is overwritten per call, keeping tests
-// independent. Only manifest-visible behavior is asserted.
+// Each test calls prepare() with its own fresh context and its own service
+// instance, keeping tests independent. Only manifest-visible behavior is
+// asserted.
 
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
@@ -62,6 +62,16 @@ describe('pey.markdown entry point', () => {
         assert.equal(error.code, ERROR_CODES.MARKDOWN_RENDER_FAILED)
         return true
       })
+    })
+
+    it('should_apply_config_flag_when_prepare_receives_allowExternalImages', async () => {
+      const ctx = createPrepareContext({ config: { allowExternalImages: 'false' } })
+      const services = await prepare(ctx)
+
+      const { html } = services[0].object.renderFragment({ markdown: '![a](https://e.test/x.png)' })
+
+      assert.ok(!html.includes('https://e.test'), 'string config from the environment must be honored')
+      assert.ok(html.includes('alt="a"'), 'alt text must stay')
     })
 
     it('should_assign_lifecycle_hooks_when_prepare_succeeds', async () => {

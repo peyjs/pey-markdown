@@ -591,6 +591,30 @@ describe('renderFragment — footnotes, schemes and images', () => {
     assert.ok(local.includes('src="/local/x.png"'), 'relative src must stay')
   })
 
+  it('should_keep_external_src_when_images_are_allowed_by_default', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '![a](https://e.test/x.png)' })
+
+    assert.ok(html.includes('src="https://e.test/x.png"'), 'default policy must allow external images')
+  })
+
+  it('should_accept_string_flags_when_config_comes_from_the_environment', () => {
+    const allowed = new MarkdownService({ allowExternalImages: 'true' })
+    const blocked = new MarkdownService({ allowExternalImages: 'false' })
+
+    assert.ok(allowed.renderFragment({ markdown: '![a](https://e.test/x.png)' }).html.includes('src="https://e.test/x.png"'))
+    assert.ok(!blocked.renderFragment({ markdown: '![a](https://e.test/x.png)' }).html.includes('https://e.test'))
+  })
+
+  it('should_render_bracketed_autolink_when_source_uses_angle_url', () => {
+    const service = new MarkdownService()
+
+    const { html } = service.renderFragment({ markdown: '<https://example.com/page>' })
+
+    assert.ok(html.includes('<a href="https://example.com/page">'), 'bracketed autolink must render')
+  })
+
   it('should_unwrap_dashed_tags_when_source_has_suffix_names', () => {
     const service = new MarkdownService()
 

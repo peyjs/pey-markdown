@@ -7,6 +7,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { addHeadingIds } from '../lib/heading-ids.js'
+import { sanitizeHtml } from '../lib/sanitize.js'
 
 const PREFIX = 'user-content-'
 
@@ -116,7 +117,7 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.deepEqual(toc, [])
   })
 
-  it('should_skip_headings_inside_comments_and_script_subtrees', () => {
+  it('should_skip_headings_inside_comments_and_script_subtrees_when_content_is_dropped', () => {
     const raw = '<!-- <h1>hidden</h1> --><script><h1>dropped</h1></script><h2>live</h2>'
 
     const { html, toc } = addHeadingIds(raw, PREFIX)
@@ -125,6 +126,34 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.ok(!html.includes('user-content-h-dropped'))
     assert.ok(html.includes('id="user-content-h-live"'))
     assert.deepEqual(toc.map((entry) => entry.text), ['live'])
+  })
+
+  it('should_keep_toc_matching_sanitized_html_when_script_nests_same_name_tags', () => {
+    // The sanitizer counts nested same-name opens/closes; the id injector
+    // walks the exact same drop regions, so the nested heading must not
+    // reach the toc either.
+    const raw = '<script><script></script><h1>ghost</h1></script><h2>live</h2>'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+    const sanitized = sanitizeHtml(html)
+
+    assert.ok(!html.includes('user-content-h-ghost'))
+    assert.ok(!toc.some((entry) => entry.text === 'ghost'))
+    // Contract invariant: every toc id also exists in the sanitized output.
+    for (const entry of toc) {
+      assert.ok(sanitized.includes(`id="${entry.id}"`), `toc id ${entry.id} must survive sanitization`)
+    }
+  })
+
+  it('should_keep_toc_matching_sanitized_html_when_script_tag_is_self_closing', () => {
+    const raw = '<script/><h1>live</h1>'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+    const sanitized = sanitizeHtml(html)
+
+    assert.ok(html.includes('id="user-content-h-live"'))
+    assert.deepEqual(toc.map((entry) => entry.text), ['live'])
+    for (const entry of toc) {
+      assert.ok(sanitized.includes(`id="${entry.id}"`))
+    }
   })
 
   it('should_not_match_similar_names_when_tag_extends_heading_name', () => {

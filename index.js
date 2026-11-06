@@ -27,6 +27,13 @@ export async function prepare(prepareContext) {
   // activation never runs — e.g. the plugin is skipped at settlement — hooks
   // assigned in activate() would be lost and the service would stay usable
   // after deactivation instead of reporting SERVICE_UNAVAILABLE.
+  //
+  // Contract assumption: the Core owns prepareContext.onShutdown /
+  // onDeactivated exclusively — it defines no default value and does no hook
+  // chaining (bonyan/core.md leaves the exact hook shape to the contract
+  // details), so a plain assignment replaces nothing. If the Core ever
+  // composes hooks, this assignment must become a wrap.
+  //
   // The hooks close over this call's own service instance and over the
   // call's own context object, never over module-level state, so repeated
   // prepare() calls stay independent.
