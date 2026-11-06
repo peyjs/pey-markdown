@@ -271,3 +271,22 @@ describe('sanitizeHtml — edge cases', () => {
     assert.equal(sanitizeHtml(42), '')
   })
 })
+
+  it('should_treat_string_flags_like_the_service_when_sanitizing_directly', () => {
+    const blocked = sanitizeHtml('<p><img src="https://e.test/a.png"></p>', { allowExternalImages: 'false' })
+
+    assert.equal(blocked, '<p><img></p>', 'string false must block external images')
+    assert.ok(!blocked.includes('https://e.test'))
+    const allowed = sanitizeHtml('<p><img src="https://e.test/a.png"></p>', { allowExternalImages: 'true' })
+
+    assert.ok(allowed.includes('https://e.test'), 'string true must allow external images')
+  })
+
+  it('should_keep_content_after_a_self_closing_dropped_tag_when_the_subtree_ends', () => {
+    // A self-closing same-name tag must not deepen the drop: everything up
+    // to the next closer would otherwise be silently swallowed.
+    assert.equal(
+      sanitizeHtml('<script>x<script/>y</script><p>visible-to-browser</p>'),
+      '<p>visible-to-browser</p>',
+    )
+  })

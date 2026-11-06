@@ -195,3 +195,26 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.equal(toc.length, 2)
   })
 })
+
+  it('should_give_ids_to_headings_after_an_unclosed_comment_when_the_sanitizer_keeps_them', () => {
+    // The sanitizer escapes an unclosed comment and keeps scanning the rest
+    // as live content; the toc must match that, not skip to end of input.
+    const raw = '<!--\n<h1>hello</h1>\n'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+
+    assert.ok(html.includes('id="user-content-h-hello"'), 'the heading after an unclosed comment gets an id')
+    assert.deepEqual(toc.map((entry) => entry.text), ['hello'])
+    const sanitized = sanitizeHtml(html)
+    for (const entry of toc) {
+      assert.ok(sanitized.includes(`id="${entry.id}"`), `toc id ${entry.id} must survive sanitization`)
+    }
+  })
+
+  it('should_give_nested_headings_their_own_ids_when_inline_html_nests_a_heading', () => {
+    const raw = '<h1>a<h2>inner</h2></h1>'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-a">'), 'outer heading keeps its id')
+    assert.ok(html.includes('<h2 id="user-content-h-inner">'), 'the nested heading gets its own id')
+    assert.deepEqual(toc.map((entry) => [entry.level, entry.text]), [[1, 'a'], [2, 'inner']], 'the outer text must not swallow the nested heading')
+  })

@@ -8,6 +8,7 @@
 
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import { ERROR_CODES } from '../lib/constants.js'
 import MarkdownService from '../lib/markdown-service.js'
@@ -162,4 +163,26 @@ describe('pey.markdown entry point', () => {
       assert.equal(services[0].name, 'pey.markdown.service')
     })
   })
+})
+
+it('should_resolve_import_map_entries_when_the_reference_doc_declares_one', async () => {
+  // NFR-2 smoke test: the browser import map documented in reference.md
+  // must stay structurally valid and cover the runtime entry points — a
+  // dependency change that breaks the mapping fails here, not only in a
+  // manual Chromium check.
+  const reference = await readFile(new URL('../docs/reference.md', import.meta.url), 'utf8')
+  const block = reference.match(/```json\n(\{[\s\S]*?\n\})\n```/)
+  assert.notEqual(block, null, 'reference.md must carry the import map JSON block')
+
+  const map = JSON.parse(block[1])
+  assert.equal(typeof map.imports, 'object')
+  for (const [specifier, target] of Object.entries(map.imports)) {
+    // Keys are bare specifiers (trailing-scope keys like `pkg/lib/` are
+    // legal too); values are relative paths.
+    assert.match(specifier, /^[^\s.][^\s]*\/?$/, specifier)
+    assert.ok(!specifier.includes('//'), specifier)
+    assert.ok(target.startsWith('./'), `${specifier} must map to a relative path`)
+  }
+  assert.ok('micromark' in map.imports, 'the runtime entry micromark must be mapped')
+  assert.ok('micromark-extension-gfm' in map.imports, 'the runtime entry micromark-extension-gfm must be mapped')
 })

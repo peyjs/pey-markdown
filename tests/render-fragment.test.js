@@ -7,6 +7,7 @@ import assert from 'node:assert/strict'
 
 import MarkdownService from '../lib/markdown-service.js'
 import { ERROR_CODES } from '../lib/constants.js'
+import { ARIA_BACK_LABEL_PATTERN } from '../lib/sanitize-policy.js'
 import { persianFootnoteOptions } from 'parsneshan'
 
 /**
@@ -631,3 +632,27 @@ describe('renderFragment — footnotes, schemes and images', () => {
     assert.ok(!html.includes('javascript:'), 'no dangerous scheme')
   })
 })
+
+  it('should_match_the_sanitizer_pattern_with_real_labels_when_footnotes_render', () => {
+    // Contract: the sanitizer's aria-label allowlist must accept exactly
+    // the labels the two real footnote sources generate — an upstream
+    // wording change fails here loudly instead of silently dropping
+    // accessibility labels.
+    const service = new MarkdownService()
+    const english = service.renderFragment({ markdown: 'text[^1]\n\n[^1]: note' }).html
+    const persian = service.renderFragment({
+      markdown: 'متن[^1]\n\n[^1]: توضیح',
+      footnoteOptions: persianFootnoteOptions,
+    }).html
+
+    for (const [html, source] of [[english, 'gfm'], [persian, 'parsneshan']]) {
+      const labels = [...html.matchAll(/aria-label="([^"]+)"/g)].map((match) => match[1])
+      assert.ok(labels.length > 0, `${source} must emit at least one backref aria-label`)
+      for (const label of labels) {
+        assert.ok(
+          ARIA_BACK_LABEL_PATTERN.test(label),
+          `${source} label "${label}" must match the sanitizer's aria-label pattern`,
+        )
+      }
+    }
+  })
