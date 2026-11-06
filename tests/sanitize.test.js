@@ -52,6 +52,15 @@ describe('sanitizeHtml — safe content preserved', () => {
 
     assert.equal(sanitizeHtml(html), html)
   })
+
+  it('should_keep_highlight_when_fragment_has_mark_markup', () => {
+    // <mark> carries no attributes on purpose: renderer-built highlight only.
+    assert.equal(sanitizeHtml('<p><mark>مهم</mark></p>'), '<p><mark>مهم</mark></p>')
+    assert.equal(
+      sanitizeHtml('<p><mark onmouseover="x()">مهم</mark></p>'),
+      '<p><mark>مهم</mark></p>',
+    )
+  })
 })
 
 describe('sanitizeHtml — dangerous content removed', () => {
