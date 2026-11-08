@@ -1,6 +1,6 @@
 {
   "name": "pey.markdown",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "Render Markdown (CommonMark + GFM) to a sanitized HTML fragment with injectable Persian extensions",
   "exports": {

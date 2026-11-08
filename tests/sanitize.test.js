@@ -270,7 +270,6 @@ describe('sanitizeHtml — edge cases', () => {
     assert.equal(sanitizeHtml(undefined), '')
     assert.equal(sanitizeHtml(42), '')
   })
-})
 
   it('should_treat_string_flags_like_the_service_when_sanitizing_directly', () => {
     const blocked = sanitizeHtml('<p><img src="https://e.test/a.png"></p>', { allowExternalImages: 'false' })
@@ -290,3 +289,4 @@ describe('sanitizeHtml — edge cases', () => {
       '<p>visible-to-browser</p>',
     )
   })
+})

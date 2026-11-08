@@ -631,7 +631,6 @@ describe('renderFragment — footnotes, schemes and images', () => {
     assert.ok(!html.includes('<script'), 'no live dangerous tag')
     assert.ok(!html.includes('javascript:'), 'no dangerous scheme')
   })
-})
 
   it('should_match_the_sanitizer_pattern_with_real_labels_when_footnotes_render', () => {
     // Contract: the sanitizer's aria-label allowlist must accept exactly
@@ -656,3 +655,4 @@ describe('renderFragment — footnotes, schemes and images', () => {
       }
     }
   })
+})

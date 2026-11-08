@@ -169,6 +169,74 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.ok(html.includes('<h1 id="user-content-h-tail">tail'))
     assert.deepEqual(toc, [{ id: 'user-content-h-tail', level: 1, text: 'tail' }])
   })
+
+  it('should_give_ids_to_headings_after_an_unclosed_comment_when_the_sanitizer_keeps_them', () => {
+    // The sanitizer escapes an unclosed comment and keeps scanning the rest
+    // as live content; the toc must match that, not skip to end of input.
+    const raw = '<!--\n<h1>hello</h1>\n'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+
+    assert.ok(html.includes('id="user-content-h-hello"'), 'the heading after an unclosed comment gets an id')
+    assert.deepEqual(toc.map((entry) => entry.text), ['hello'])
+    const sanitized = sanitizeHtml(html)
+    for (const entry of toc) {
+      assert.ok(sanitized.includes(`id="${entry.id}"`), `toc id ${entry.id} must survive sanitization`)
+    }
+  })
+
+  it('should_give_nested_headings_their_own_ids_when_inline_html_nests_a_heading', () => {
+    const raw = '<h1>a<h2>inner</h2></h1>'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-a">'), 'outer heading keeps its id')
+    assert.ok(html.includes('<h2 id="user-content-h-inner">'), 'the nested heading gets its own id')
+    assert.deepEqual(toc.map((entry) => [entry.level, entry.text]), [[1, 'a'], [2, 'inner']], 'the outer text must not swallow the nested heading')
+  })
+
+  it('should_leave_host_tag_untouched_when_a_heading_tag_sits_inside_an_attribute_value', () => {
+    // FR-13: a `<hN>` inside a quoted attribute value of a host tag is not
+    // a heading — no id may be injected into the attribute and no ghost toc
+    // entry may appear.
+    const raw = '<img alt="<h2>t">x'
+    const { html, toc } = addHeadingIds(raw, PREFIX)
+
+    assert.equal(html, raw, 'the host tag stays byte-identical')
+    assert.deepEqual(toc, [])
+  })
+
+  it('should_not_create_toc_entries_when_headings_sit_inside_attribute_values', () => {
+    const { html, toc } = addHeadingIds('<a title="<h4>q">w</a><p title="<h1>fake">real</p>', PREFIX)
+
+    assert.ok(!html.includes('id='), 'no id anywhere in the html')
+    assert.deepEqual(toc, [])
+  })
+
+  it('should_use_the_rendered_text_when_a_closed_comment_carries_a_gt', () => {
+    // The sanitizer removes the whole closed comment, including its `>`;
+    // the toc text must not keep the `-->` tail the naive tag strip leaves.
+    const { toc } = addHeadingIds('<h1>a <!-- c > b --> d</h1>', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a  d'])
+  })
+
+  it('should_keep_content_after_a_comment_holding_a_close_tag_when_heading_text_is_extracted', () => {
+    // A `</h1>` inside a comment does not close the heading: the sanitizer
+    // skips comments, so the content region extends to the real close tag.
+    const { html, toc } = addHeadingIds('<h1>a <!-- </h1> --> b</h1>tail', PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-a-b">'))
+    assert.deepEqual(toc.map((entry) => entry.text), ['a  b'])
+  })
+
+  it('should_exclude_dropped_script_content_when_heading_text_is_extracted', () => {
+    // The sanitizer drops the whole script subtree; the toc text must not
+    // keep the script body the naive tag strip leaves behind.
+    const { html, toc } = addHeadingIds('<h1>a<script>var x = 1;</script>b</h1>', PREFIX)
+    const sanitized = sanitizeHtml(html)
+
+    assert.ok(!sanitized.includes('var x'), 'the sanitizer drops the script subtree')
+    assert.deepEqual(toc.map((entry) => entry.text), ['ab'])
+  })
 })
 
 describe('addHeadingIds — determinism and emptiness', () => {
@@ -195,26 +263,3 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.equal(toc.length, 2)
   })
 })
-
-  it('should_give_ids_to_headings_after_an_unclosed_comment_when_the_sanitizer_keeps_them', () => {
-    // The sanitizer escapes an unclosed comment and keeps scanning the rest
-    // as live content; the toc must match that, not skip to end of input.
-    const raw = '<!--\n<h1>hello</h1>\n'
-    const { html, toc } = addHeadingIds(raw, PREFIX)
-
-    assert.ok(html.includes('id="user-content-h-hello"'), 'the heading after an unclosed comment gets an id')
-    assert.deepEqual(toc.map((entry) => entry.text), ['hello'])
-    const sanitized = sanitizeHtml(html)
-    for (const entry of toc) {
-      assert.ok(sanitized.includes(`id="${entry.id}"`), `toc id ${entry.id} must survive sanitization`)
-    }
-  })
-
-  it('should_give_nested_headings_their_own_ids_when_inline_html_nests_a_heading', () => {
-    const raw = '<h1>a<h2>inner</h2></h1>'
-    const { html, toc } = addHeadingIds(raw, PREFIX)
-
-    assert.ok(html.includes('<h1 id="user-content-h-a">'), 'outer heading keeps its id')
-    assert.ok(html.includes('<h2 id="user-content-h-inner">'), 'the nested heading gets its own id')
-    assert.deepEqual(toc.map((entry) => [entry.level, entry.text]), [[1, 'a'], [2, 'inner']], 'the outer text must not swallow the nested heading')
-  })
