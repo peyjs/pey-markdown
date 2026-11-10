@@ -280,6 +280,21 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.deepEqual(addHeadingIds(undefined, PREFIX), { html: '', toc: [] })
   })
 
+  it('should_stay_linear_when_a_document_has_thousands_of_headings_and_dead_candidates', () => {
+    // Complexity gate: the id injection is advertised as single-pass linear.
+    // Thousands of same-text headings used to trip a quadratic suffix probe
+    // and a backward comment scan, and thousands of quoted `</h1>` candidates
+    // a quadratic coverage walk — a generous wall (milliseconds, not seconds)
+    // keeps any of them from regressing past this gate.
+    const html = '<h1>x</h1>' + '<h2>a</h2>'.repeat(10000) + '<h1>' + '<a b="</h1>">'.repeat(5000) + 'y</h1>';
+    const started = performance.now();
+    const { toc } = addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    assert.equal(toc.length, 10002, 'every real heading gets an entry, none of the quoted candidates');
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  })
+
   it('should_produce_identical_output_when_same_html_is_processed_twice', () => {
     const raw = '<h2>install</h2><h2>install</h2><h1>مقدمه</h1>'
 
