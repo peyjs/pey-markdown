@@ -22,6 +22,7 @@
 - `lib/heading-ids.js` — ساخت شناسهٔ پایدار تیترهای `h1`–`h6` و آرایهٔ `toc` (تنها slugger؛ قبل از ضدعفونی؛ پرش زیردرخت حذف با همان راه‌رفت سانیتایزر).
 - `lib/markdown-service.js` — سرویس رندر (`renderFragment`)؛ stateless و سنکرون.
 - `tests/sanitize.test.js` — تست‌های سانیتایزر.
+- `tests/heading-scan.test.js` — unit tests of the low-level tag scanning helpers (candidate-acceptance boundaries, quote/comment handling).
 - `tests/heading-ids.test.js` — تست‌های شناسه تیتر و toc.
 - `tests/render-fragment.test.js` — تست‌های رندر CommonMark/GFM و خطا.
 - `tests/entry.test.js` — تست‌های نقطه ورود دوفازی.
@@ -76,7 +77,7 @@ const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توض�
 
 ### فهرست‌مطالب و anchorها
 
-هر تیتر `h1`–`h6` در خود HTML شناسهٔ پایدار می‌گیرد و `toc` دقیقاً همان شناسه‌ها را با سطح و متن سادهٔ تیتر برمی‌گرداند؛ مصرف‌کننده anchor را با `href="#<id>"` و فهرست را از روی `toc` می‌سازد (رندر فهرست با مصرف‌کننده است، slug هرگز):
+هر تیتر `h1`–`h6` در خود HTML شناسهٔ پایدار می‌گیرد و `toc` دقیقاً همان شناسه‌ها را با سطح و متن نمایشی تیتر برمی‌گرداند (escape بر عهدهٔ مصرف‌کننده؛ قواعد پایین‌تر)؛ مصرف‌کننده anchor را با `href="#<id>"` و فهرست را از روی `toc` می‌سازد (رندر فهرست با مصرف‌کننده است، slug هرگز):
 
 ```js
 const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## نصب app' })

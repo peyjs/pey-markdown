@@ -255,6 +255,38 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.deepEqual(toc.map((entry) => entry.text), [' x'])
   })
 
+  it('should_close_the_heading_after_an_unclosed_comment_when_the_rest_still_renders_live', () => {
+    // Round-6 regression: the sanitizer escapes only the opener of an
+    // unclosed comment and keeps the rest live — the close tag after it is
+    // real, and the text after it must not leak into the toc text.
+    const { html, toc } = addHeadingIds('<h1>a<!-- x</h1>b', PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-a-x">'), 'the id comes from the rendered heading text only')
+    assert.deepEqual(toc.map((entry) => entry.text), ['a<!-- x'], 'text after the real close stays out of the toc')
+  })
+
+  it('should_not_leak_content_after_the_real_close_when_a_nested_heading_follows_an_unclosed_comment', () => {
+    const { toc } = addHeadingIds('<h1>a<!-- x</h1>b<h2>c</h2>d', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => [entry.level, entry.text]), [[1, 'a<!-- x'], [2, 'c']])
+  })
+
+  it('should_treat_a_self_closing_close_tag_as_the_real_close_when_extracting_toc_text', () => {
+    // `</h1/>` closes the heading in the sanitizer: content after it renders
+    // outside the heading and must stay out of the toc text.
+    const { toc } = addHeadingIds('<h1>a</h1/>b', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a'])
+  })
+
+  it('should_keep_a_truncated_close_tag_as_dead_text_when_the_input_ends_inside_it', () => {
+    // `</h1` at EOF renders as dead text INSIDE the heading (the sanitizer
+    // auto-closes it): the toc text must carry it, not drop it.
+    const { toc } = addHeadingIds('<h1>a</h1', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a</h1'])
+  })
+
   it('should_keep_dead_tag_segments_as_text_when_the_nested_heading_head_aborts', () => {
     // The sanitizer renders an aborted tag head as escaped dead text and
     // keeps the rest live; the toc text must match that, not drop the tail.
