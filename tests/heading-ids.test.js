@@ -228,6 +228,41 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.deepEqual(toc.map((entry) => entry.text), ['a  b'])
   })
 
+  it('should_not_create_toc_entries_when_a_heading_sits_in_an_attribute_of_a_dead_tag', () => {
+    // An aborted tag head (nested '<' outside quotes) is dead markup the
+    // sanitizer escapes and never re-examines: the injector must resume at
+    // the abort position, not rewind into the quoted attributes.
+    const { html, toc } = addHeadingIds('<div alt="<h2>t" <z>x\n\n<h1>real</h1>', PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-real">'), 'the live heading gets its id')
+    assert.deepEqual(toc.map((entry) => [entry.level, entry.text]), [[1, 'real']], 'no ghost entry for the dead tag')
+  })
+
+  it('should_not_start_a_document_wide_drop_when_a_dropped_tag_sits_in_an_attribute_of_a_dead_tag', () => {
+    // A `<style>` inside a quoted attribute of a dead tag is dead text, not
+    // a drop start: headings after it stay live and get their ids.
+    const { html, toc } = addHeadingIds('<div style="<style>" <z>\n<h1>after</h1>\n', PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-after">'))
+    assert.deepEqual(toc.map((entry) => entry.text), ['after'])
+  })
+
+  it('should_keep_heading_text_matching_the_render_when_the_close_tag_sits_in_an_attribute', () => {
+    // A `</h1>` inside a quoted attribute value does not close the heading.
+    const { html, toc } = addHeadingIds('<h1><a title="</h1>"> x</h1>tail', PREFIX)
+
+    assert.ok(html.includes('<h1 id="user-content-h-x">'))
+    assert.deepEqual(toc.map((entry) => entry.text), [' x'])
+  })
+
+  it('should_keep_dead_tag_segments_as_text_when_the_nested_heading_head_aborts', () => {
+    // The sanitizer renders an aborted tag head as escaped dead text and
+    // keeps the rest live; the toc text must match that, not drop the tail.
+    const { toc } = addHeadingIds('<h1>a<h2 b="c" <z>inner</h2></h1>', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a<h2 b="c" inner'])
+  })
+
   it('should_exclude_dropped_script_content_when_heading_text_is_extracted', () => {
     // The sanitizer drops the whole script subtree; the toc text must not
     // keep the script body the naive tag strip leaves behind.
