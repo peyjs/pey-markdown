@@ -340,6 +340,55 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.ok(!sanitized.includes('var x'), 'the sanitizer drops the script subtree')
     assert.deepEqual(toc.map((entry) => entry.text), ['ab'])
   })
+
+  it('should_not_leak_text_outside_the_heading_when_an_invalid_head_carries_a_quote', () => {
+    // Round-8: `<b'` is not a tag to the sanitizer (one escaped '<' of live
+    // text) — the structural walk must not open a ghost quote that swallows
+    // the real close tag, or text rendered OUTSIDE the heading leaks into
+    // the toc text. Same for the double-quote shape.
+    for (const quote of ["'", '"']) {
+      const { toc } = addHeadingIds(`<h1>a<b${quote}c</h1>d`, PREFIX)
+
+      assert.deepEqual(toc.map((entry) => entry.text), [`a<b${quote}c`])
+    }
+  })
+
+  it('should_keep_the_outer_text_when_a_same_level_heading_closes_first', () => {
+    // Round-8: emitTag closes the innermost open hN — `x` renders INSIDE
+    // the outer heading and must be its toc text, and the inner entry stays
+    // empty.
+    const { toc } = addHeadingIds('<h1><h1></h1>x</h1>y', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['x', ''])
+  })
+
+  it('should_end_the_heading_where_a_closer_of_a_tag_opened_below_pops_through', () => {
+    // Round-8: emitTag pops through the matched entry — the closer of a tag
+    // opened BEFORE the heading closes the heading there, so `c` renders
+    // outside and stays out of the toc text (p and div wrap the same way).
+    for (const [open, close] of [['<b>', '</b>'], ['<p>', '</p>'], ['<div>', '</div>']]) {
+      const { toc } = addHeadingIds(`${open}<h1>a${close}c</h1>`, PREFIX)
+
+      assert.deepEqual(toc.map((entry) => entry.text), ['a'], `${open} pops through and closes the heading`)
+    }
+  })
+
+  it('should_keep_the_text_after_a_nested_close_and_comment_when_the_outer_heading_stays_open', () => {
+    // Round-8: after the inner heading closes, the unclosed comment renders
+    // live INSIDE the outer heading — its escaped opener is toc text.
+    const { toc } = addHeadingIds('<h1> <h1></h1><!--a</h1>', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), [' <!--a', ''])
+  })
+
+  it('should_close_the_heading_when_a_closer_of_a_tag_opened_inside_it_pops_through', () => {
+    // Round-8 stack model, within-heading shape: `<b>` opens inside the
+    // heading; `</b>` pops only b, but a later heterogeneous closer of a
+    // seeded tag pops the heading — here `</i>` with i seeded below.
+    const { toc } = addHeadingIds('<i><h1>a<b>c</b>d</i>e</h1>', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['acd'])
+  })
 })
 
 describe('addHeadingIds — determinism and emptiness', () => {
@@ -362,6 +411,20 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.equal(toc.length, 10002, 'every real heading gets an entry, none of the quoted candidates');
     assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
   })
+
+  it('should_stay_linear_when_thousands_of_headings_each_hold_an_unclosed_comment', () => {
+    // Complexity gate (round 8): the comment throttle must hold across
+    // findCloseTag CALLS, not just inside one — a per-call flag re-probed
+    // the whole remaining input for every heading (quadratic in the
+    // document); the document-wide limit keeps the pass linear.
+    const html = '<h1>a<!--b</h1>\n\n'.repeat(10000);
+    const started = performance.now();
+    const { toc } = addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    assert.equal(toc.length, 10000, 'every heading gets its entry');
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
 
   it('should_produce_identical_output_when_same_html_is_processed_twice', () => {
     const raw = '<h2>install</h2><h2>install</h2><h1>مقدمه</h1>'

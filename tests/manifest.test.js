@@ -2,6 +2,15 @@
 // Strategy: read the authoritative manifest.json (static JSON import —
 // deterministic, no network) and assert the code honors the same contract:
 // identity constants, service name, method errors, and default config.
+//
+// CONSCIOUS DEVIATION from the Bonyan testing standard's "no real
+// filesystem" rule (round 8): the version-lock test below reads README.md
+// and docs/requirements.md with readFile at runtime. The subject under test
+// IS the byte content of those markdown files — a JSON import cannot carry
+// prose, and this repo has no build step that could snapshot them into a
+// fixture. The reads are of the repo's own committed files, so the test
+// stays deterministic, offline and hermetic in every other respect; this
+// comment records the trade-off as a decision, not an oversight.
 
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
