@@ -412,6 +412,22 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
   })
 
+  it('should_stay_linear_when_a_document_holds_thousands_of_unclosed_headings', () => {
+    // Complexity gate (round 9): an unclosed heading used to send BOTH the
+    // close search and the text extraction to the end of the document per
+    // heading (a 60k-char input took ~27s); in the single-pass architecture
+    // every character costs the same wherever a heading closes — or never
+    // does.
+    const html = '<h1>a\n\n'.repeat(10000);
+    const started = performance.now();
+    const { toc } = addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    assert.equal(toc.length, 10000, 'every heading gets its entry');
+    assert.ok(toc.every((entry) => entry.text === 'a\n\n'), 'each heading owns only its own segment');
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
+
   it('should_stay_linear_when_thousands_of_headings_each_hold_an_unclosed_comment', () => {
     // Complexity gate (round 8): the comment throttle must hold across
     // findCloseTag CALLS, not just inside one — a per-call flag re-probed
