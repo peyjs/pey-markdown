@@ -279,6 +279,42 @@ describe('addHeadingIds — raw HTML shapes', () => {
     assert.deepEqual(toc.map((entry) => entry.text), ['a'])
   })
 
+  it('should_treat_a_space_boundary_close_tag_without_termination_as_dead_text_when_extracting_toc_text', () => {
+    // `</h1 x` never terminates: the sanitizer renders the whole segment as
+    // dead text INSIDE the heading and the heading closes later (or at EOF).
+    const { toc } = addHeadingIds('<h1>a</h1 x', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a</h1 x'])
+  })
+
+  it('should_close_the_heading_at_the_second_close_tag_when_the_first_carries_an_attribute_list', () => {
+    // `</h1 <b>` aborts (nested '<'): the dead segment renders inside the
+    // heading, `<b>c</b>` renders live, and the heading closes at the real
+    // second `</h1>` — text `d` stays outside.
+    const { toc } = addHeadingIds('<h1>a</h1 <b>c</h1>d', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a</h1 c'])
+  })
+
+  it('should_close_the_heading_at_the_second_close_tag_when_the_first_has_a_trailing_slash_and_attributes', () => {
+    const { toc } = addHeadingIds('<h1>a</h1/ <b>c</h1>d', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a</h1/ c'])
+  })
+
+  it('should_stay_linear_when_a_heading_holds_thousands_of_unclosed_comments', () => {
+    // Complexity gate (round 7): the close-tag sweep shares the sanitizer's
+    // noCommentClose throttle — probing the whole input per unclosed comment
+    // opener was quadratic inside findCloseTag.
+    const html = '<h1>a' + '<!--'.repeat(10000) + '</h1>b'
+    const started = performance.now()
+    const { toc } = addHeadingIds(html, PREFIX)
+    const elapsed = performance.now() - started
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['a<!--' + '<!--'.repeat(9999)])
+    assert.ok(elapsed < 2000, `the linear sweep must not degrade (took ${elapsed.toFixed(0)}ms)`)
+  })
+
   it('should_keep_a_truncated_close_tag_as_dead_text_when_the_input_ends_inside_it', () => {
     // `</h1` at EOF renders as dead text INSIDE the heading (the sanitizer
     // auto-closes it): the toc text must carry it, not drop it.

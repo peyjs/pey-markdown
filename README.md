@@ -1,6 +1,6 @@
 # pey.markdown
 
-[![نسخه](https://img.shields.io/badge/version-1.1.0-blue.svg)](#)
+[![نسخه](https://img.shields.io/badge/version-1.2.1-blue.svg)](#)
 [![مجوز](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![معماری بنیان](https://img.shields.io/badge/bonyan-0.11-5cc3bf)](https://github.com/barnevis/bonyan)
 
@@ -34,7 +34,7 @@ cd plugins/pey.markdown && npm install
 ```json
 {
   "plugins": [
-    { "name": "pey.markdown", "version": "1.1.0", "path": "./plugins/pey.markdown" }
+    { "name": "pey.markdown", "version": "1.2.1", "path": "./plugins/pey.markdown" }
   ],
   "config": {
     "pey.markdown": { "maxInputChars": 200000, "allowExternalImages": true }
