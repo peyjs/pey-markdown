@@ -468,6 +468,23 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
   });
 
+  it('should_stay_linear_when_many_heading_closes_meet_a_deep_unclosed_tag_base', () => {
+    // Complexity gate (round 11): the sink restore after a pop-through is
+    // O(1) — the entry below the pop already carries its nearest sink — so
+    // the COMBINED shape (a deep unclosed `<div>` base under many closed
+    // `<h2>`s) must not pay a per-close rescan of the base. That rescan was
+    // quadratic (16.5k divs + 6.6k closed headings, 194k chars, took ~490ms
+    // in the injector while the same tag counts with the headings first took
+    // ~16ms).
+    const html = '<h1>A\n\n' + '<div>\n\n'.repeat(16500) + '<h2>t</h2>\n\n'.repeat(6600);
+    const started = performance.now();
+    const { toc } = addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    assert.equal(toc.length, 6601, 'the outer h1 and every closed h2 get their entry');
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
+
   it('should_stay_linear_when_thousands_of_headings_each_hold_an_unclosed_comment', () => {
     // Complexity gate (round 8): the comment throttle must hold across
     // findCloseTag CALLS, not just inside one — a per-call flag re-probed
