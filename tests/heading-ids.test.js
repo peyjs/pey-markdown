@@ -412,6 +412,46 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
   })
 
+  it('should_keep_a_footnote_heading_subtree_out_of_the_outer_text_when_the_outer_heading_is_unclosed', () => {
+    // Round-10 regression: a footnote heading is a real discard barrier —
+    // its whole subtree (label and body) belongs to no toc entry and must
+    // never leak into an open outer heading's text (which would change the
+    // id too). A regular nested heading keeps its own sink.
+    const { toc } = addHeadingIds('<h1>A<h2 id="footnote-label">x</h2>B', PREFIX)
+
+    assert.deepEqual(toc.map((entry) => entry.text), ['AB'])
+    const { toc: withNested } = addHeadingIds('<h1>A<h2>x</h2>B', PREFIX)
+    assert.deepEqual(withNested.map((entry) => entry.text), ['AB', 'x'], 'the discard barrier is footnote-specific')
+  })
+
+  it('should_stay_linear_when_thousands_of_unclosed_tags_grow_the_stack_under_text', () => {
+    // Complexity gate (round 10): the text sink is a pointer, not a stack
+    // search — a per-text scan over a deeply nested unclosed stack was
+    // quadratic (198k chars took ~1.9s in the injector alone).
+    const html = '<div>a\n\n'.repeat(20000);
+    const started = performance.now();
+    addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
+
+  it('should_stay_linear_when_thousands_of_stray_closers_meet_a_deep_stack', () => {
+    // Complexity gate (round 10): a closer with no open match is a no-op
+    // WITHOUT scanning the stack (the name→count mirror) — stray closers
+    // over a deep stack were quadratic in BOTH the injector and the
+    // sanitizer (196k chars took ~4.8s).
+    const html = '<span>\n\n'.repeat(14000) + '</i>\n\n'.repeat(14000);
+    const started = performance.now();
+    const { html: out } = addHeadingIds(html, PREFIX);
+    const elapsed = performance.now() - started;
+
+    // Every open tag survives the pass and every stray closer is a no-op —
+    // the pass stayed linear (elapsed gate below), the content intact.
+    assert.equal((out.match(/<span>/g) ?? []).length, 14000, 'every allowed open tag emitted');
+    assert.ok(elapsed < 2000, `the linear pass must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
+
   it('should_stay_linear_when_a_document_holds_thousands_of_unclosed_headings', () => {
     // Complexity gate (round 9): an unclosed heading used to send BOTH the
     // close search and the text extraction to the end of the document per
