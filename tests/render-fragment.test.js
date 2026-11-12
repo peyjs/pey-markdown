@@ -658,7 +658,7 @@ describe('renderFragment — footnotes, schemes and images', () => {
 })
 
 describe('renderFragment — cost gates', () => {
-  it('should_render_two_thousand_distinct_footnotes_well_under_two_seconds_through_the_service', () => {
+  it('should_render_two_thousand_distinct_footnotes_under_two_seconds_when_input_goes_through_the_service', () => {
     // Complexity gate (round 13, moved to the SERVICE path in round 14):
     // the footnote-heavy family (each footnote = one reference + one
     // definition — the real chat/wiki pattern) is QUADRATIC inside
@@ -670,14 +670,14 @@ describe('renderFragment — cost gates', () => {
     // production. The cost ceiling is documented in the reference
     // (محدودیت‌ها) and requirements NFR-4.
     const markdown = 'متن[^1]\n\n[^1]: توضیح\n\n'
-      + Array.from({ length: 2000 }, (unused, index) => `سطر ${index}[^${index + 2}]\n\n[^${index + 2}]: توضیح ${index}\n\n`).join('');
-    assert.ok(markdown.length < 200000, 'the gate input stays under the documented input ceiling');
-    const service = new MarkdownService();
-    const started = performance.now();
-    const { html } = service.renderFragment({ markdown });
-    const elapsed = performance.now() - started;
+      + Array.from({ length: 2000 }, (unused, index) => `سطر ${index}[^${index + 2}]\n\n[^${index + 2}]: توضیح ${index}\n\n`).join('')
+    assert.ok(markdown.length < 200000, 'the gate input stays under the documented input ceiling')
+    const service = new MarkdownService()
+    const started = performance.now()
+    const { html } = service.renderFragment({ markdown })
+    const elapsed = performance.now() - started
 
-    assert.equal((html.match(/<sup/g) ?? []).length, 2001, 'every footnote reference survives the pipeline');
-    assert.ok(elapsed < 2000, `the footnote pipeline must not degrade (took ${elapsed.toFixed(0)}ms)`);
-  });
-});
+    assert.equal((html.match(/<sup/g) ?? []).length, 2001, 'every footnote reference survives the pipeline')
+    assert.ok(elapsed < 2000, `the footnote pipeline must not degrade (took ${elapsed.toFixed(0)}ms)`)
+  })
+})
