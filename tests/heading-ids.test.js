@@ -6,6 +6,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 
+import { micromark } from 'micromark'
+import { gfm, gfmHtml } from 'micromark-extension-gfm'
 import { addHeadingIds } from '../lib/heading-ids.js'
 import { sanitizeHtml } from '../lib/sanitize.js'
 
@@ -413,7 +415,7 @@ describe('addHeadingIds — determinism and emptiness', () => {
   })
 
   it('should_keep_a_footnote_heading_subtree_out_of_the_outer_text_when_the_outer_heading_is_unclosed', () => {
-    // Round-10 regression: a footnote heading is a real discard barrier —
+    // Round-10 regression: a footnote heading is a real record-less barrier —
     // its whole subtree (label and body) belongs to no toc entry and must
     // never leak into an open outer heading's text (which would change the
     // id too). A regular nested heading keeps its own sink.
@@ -421,7 +423,7 @@ describe('addHeadingIds — determinism and emptiness', () => {
 
     assert.deepEqual(toc.map((entry) => entry.text), ['AB'])
     const { toc: withNested } = addHeadingIds('<h1>A<h2>x</h2>B', PREFIX)
-    assert.deepEqual(withNested.map((entry) => entry.text), ['AB', 'x'], 'the discard barrier is footnote-specific')
+    assert.deepEqual(withNested.map((entry) => entry.text), ['AB', 'x'], 'the record-less barrier is footnote-specific')
   })
 
   it('should_stay_linear_when_thousands_of_unclosed_tags_grow_the_stack_under_text', () => {
@@ -517,3 +519,25 @@ describe('addHeadingIds — determinism and emptiness', () => {
     assert.equal(toc.length, 2)
   })
 })
+
+  it('should_render_two_thousand_distinct_footnotes_well_under_two_seconds_when_the_upstream_cost_is_watched', () => {
+    // Complexity gate (round 13): the footnote-heavy family (each footnote
+    // = one reference + one definition — the real chat/wiki pattern) is
+    // QUADRATIC inside micromark's gfm-footnote extension itself (each
+    // definition re-tokenizes its slice). Both of this plugin's own passes
+    // stay linear, so this gate watches the UPSTREAM cost: after an
+    // `npm update` of micromark-extension-gfm a regression must trip HERE,
+    // not in production. The cost ceiling is documented in the reference
+    // (محدودیت‌ها) and requirements NFR-4.
+    const markdown = 'متن[^1]\n\n[^1]: توضیح\n\n'
+      + Array.from({ length: 2000 }, (unused, index) => `سطر ${index}[^${index + 2}]\n\n[^${index + 2}]: توضیح ${index}\n\n`).join('');
+    assert.ok(markdown.length < 200000, 'the gate input stays under the documented input ceiling');
+    const started = performance.now();
+    const raw = micromark(markdown, { allowDangerousHtml: true, extensions: [gfm()], htmlExtensions: [gfmHtml()] });
+    const injected = addHeadingIds(raw, PREFIX);
+    const sanitized = sanitizeHtml(injected.html);
+    const elapsed = performance.now() - started;
+
+    assert.equal((sanitized.match(/<sup/g) ?? []).length, 2001, 'every footnote reference survives the pipeline');
+    assert.ok(elapsed < 2000, `the footnote pipeline must not degrade (took ${elapsed.toFixed(0)}ms)`);
+  });
