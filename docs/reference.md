@@ -1,57 +1,50 @@
-# مرجع افزونه pey.markdown
+# pey.markdown — Reference
 
-> قرارداد معتبر همیشه `manifest.json` است؛ در تعارض، ملاک `manifest.json` است و این سند باید اصلاح شود.
+Self-contained reference for the `pey.markdown` feature plugin. The manifest (`manifest.json`) is always the authoritative contract; in a conflict the manifest wins and this document must be fixed.
 
-## هدف
+## Purpose
 
-تبدیل Markdown استاندارد + GFM به HTML fragment ضدعفونی‌شده، با امکان تزریق افزونه‌های فارسی پارس‌نشان به‌صورت per-call. یک ورودی Markdown، یک خروجی fragment امن با شناسهٔ پایدار تیترها و آرایهٔ `toc` مطابقشان؛ بدون پوسته سند، بدون تم، بدون منطق UI.
+Converts Markdown (CommonMark + GFM) into a sanitized HTML fragment, with per-call injection of Persian (Parsneshan) extensions. One Markdown input, one safe fragment output with stable heading ids and the matching `toc` array; no document shell, no theme, no UI logic.
 
-## ساختار
+## Structure
 
-- `manifest.json` — هویت، سرویس، خطاها، پیکربندی (قرارداد معتبر).
-- `package.json` — بسته ESM با وابستگی‌های `micromark` و `micromark-extension-gfm` (و `parsneshan` فقط برای توسعه).
-- `index.js` — نقطه ورود دوفازی بنیان (`prepare`/`activate`).
-- `lib/constants.js` — ثابت‌های مشترک (نام، نسخه، سرویس، سقف ورودی، کدهای خطا).
-- `lib/error.js` — سازنده‌های خطای استاندارد بنیان (`BonyanError extends Error`).
-- `lib/html-text.js` — رمزگشای انتیتی، توکن‌ساز اتریبیوت و escape اتریبیوت (مشترک میان سانیتایزر و تزریق شناسه).
-- `lib/sanitize.js` — ماشین حالت اصلی سانیتایزر allowlist رشته‌ای خالص (بدون DOM).
-- `lib/sanitize-state.js` — گام‌های ماشین حالت تگ (تجزیه سر تگ، مونتاژ، راه‌رفت حذف زیردرخت).
-- `lib/sanitize-policy.js` — جدول‌های سیاست: تگ‌ها/اتریبیوت‌های مجاز، الگوهای کلاس و id.
-- `lib/sanitize-attributes.js` — فیلتر اتریبیوت‌ها با مقادیر امن.
-- `lib/sanitize-uri.js` — سیاست امنیتی `href`/`src` روی URI نرمال‌شده.
-- `lib/heading-ids.js` — ساخت شناسهٔ پایدار تیترهای `h1`–`h6` و آرایهٔ `toc` (تنها slugger؛ قبل از ضدعفونی؛ پرش زیردرخت حذف با همان راه‌رفت سانیتایزر).
-- `lib/markdown-service.js` — سرویس رندر (`renderFragment`)؛ stateless و سنکرون.
-- `tests/sanitize.test.js` — تست‌های سانیتایزر.
-- `tests/heading-scan.test.js` — unit tests of the low-level tag scanning helpers (candidate-acceptance boundaries, quote/comment handling).
-- `tests/heading-ids.test.js` — تست‌های شناسه تیتر و toc.
-- `tests/render-fragment.test.js` — تست‌های رندر CommonMark/GFM و خطا.
-- `tests/entry.test.js` — تست‌های نقطه ورود دوفازی.
-- `tests/parsneshan-injection.test.js` — تست‌های تزریق افزونه‌های فارسی.
-- `tests/service-errors.test.js` — تست‌های قرارداد خطا.
-- `tests/manifest.test.js` — تست‌های هماهنگی منیفست با کد.
-- `docs/requirements.md` — نیازمندی‌های پایه و مبنای پذیرش.
-- `docs/reference.md` — همین سند.
-- `README.md` — معرفی کوتاه و ارجاع به همین سند.
-- `CHANGELOG.md` — تاریخچه نسخه‌ها.
+- `manifest.json` — plugin contract (identity, service, errors, config).
+- `package.json` — ESM package with the `micromark` and `micromark-extension-gfm` dependencies (`parsneshan` is a dev dependency only).
+- `index.js` — Bonyan two-phase entry point (`prepare` / `activate`).
+- `lib/constants.js` — shared constants (names, version, service, input cap, error codes).
+- `lib/error.js` — Bonyan standard error factories (`BonyanError extends Error`).
+- `lib/html-text.js` — entity decoder, attribute tokenizer and attribute escaping (shared by the sanitizer and heading-id injection).
+- `lib/sanitize.js` — the sanitizer's main state machine: pure-string allowlist, no DOM.
+- `lib/sanitize-state.js` — tag state-machine steps (head parsing, assembly, subtree-drop behavior).
+- `lib/sanitize-policy.js` — policy tables: allowed tags/attributes, class and id patterns.
+- `lib/sanitize-attributes.js` — attribute filtering with safe values.
+- `lib/sanitize-uri.js` — the `href`/`src` security policy evaluated on the normalized URI.
+- `lib/heading-ids.js` — stable heading ids for `h1`–`h6` and the `toc` array (the only slugger; runs before sanitization; subtree skipping reuses the sanitizer's drop behavior).
+- `lib/markdown-service.js` — the render service (`renderFragment`); stateless and synchronous.
+- `tests/` — one `node:test` file per source file.
+- `docs/requirements.md` — base requirements and acceptance basis.
+- `docs/reference.md` — this file.
+- `README.md` — short introduction and pointer here.
+- `CHANGELOG.md` — version history.
 
-## وابستگی‌ها
+## Dependencies
 
-- **Required:** ندارد.
-- **Optional:** ندارد.
+- **Required:** none.
+- **Optional:** none.
 
-وابستگی‌های npm: `micromark` و `micromark-extension-gfm` اجباری‌اند (نصب خودکار)؛ `parsneshan` فقط وابستگی توسعه است (نسخه مصرفی در تست‌ها `v0.2.0` از گیت‌هاب) — مصرف‌کننده‌ای که برچسب یا افزونه فارسی می‌خواهد خودش آن را نصب می‌کند و چون از گیت‌هاب می‌آید، نصب به دسترسی گیت‌هاب وابسته است. `lib` هیچ‌وقت مستقیم به پارس‌نشان وابسته نیست.
+npm dependencies: `micromark` and `micromark-extension-gfm` are mandatory (installed automatically); `parsneshan` is a dev dependency only (the test-consumed version is `v0.2.0` from GitHub) — a consumer wanting labels or Persian extensions installs it itself, and since it comes from GitHub, installation depends on GitHub access. `lib` never depends on Parsneshan directly.
 
-## API عمومی
+## Public API
 
-سرویس `pey.markdown.service` با یک متد `renderFragment`. جزئیات رسمی پارامترها در `manifest.json` است؛ این‌جا فقط نحوه صدازدن:
+Service: `pey.markdown.service`, one method `renderFragment`. Formal parameter details live in `manifest.json`; below is how to call it.
 
 ```js
-// رندر استاندارد (GFM همیشه روشن، بدون رفتار فارسی)
+// Standard render (GFM always on, no Persian behavior)
 const { html, toc } = service.renderFragment({ markdown: '# سلام\n\nمتن **مهم**' })
 ```
 
 ```js
-// رندر با افزونه فارسی (کالر افزونه را می‌دهد، سرویس فقط ترکیب می‌کند)
+// Persian extensions (the caller supplies the extension, the service only composes)
 import { warning, warningHtml } from 'parsneshan'
 
 const { html } = service.renderFragment({
@@ -62,22 +55,22 @@ const { html } = service.renderFragment({
 ```
 
 ```js
-// پاورقی با دامنه یکتا (مثل شناسه پیام در گپ)؛ بدون آن خروجی پایدار است
+// Footnotes with a unique scope (e.g. a message id in chat); without it the output is stable
 const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', idPrefix: 'msg-42' })
 ```
 
 ```js
-// پاورقی فارسی (پیش‌فرض انگلیسی است؛ فارسی همیشه تزریقی)
+// Persian footnotes (default labels are English; Persian is always injected)
 import { persianFootnoteOptions } from 'parsneshan'
 
 const { html } = service.renderFragment({ markdown: 'متن[^1]\n\n[^1]: توضیح', footnoteOptions: persianFootnoteOptions })
 ```
 
-ورودی خالی (`''`) fragment تهی (`{ html: '', toc: [] }`) برمی‌گرداند، نه خطا.
+An empty input (`''`) returns an empty fragment (`{ html: '', toc: [] }`), not an error.
 
-### فهرست‌مطالب و anchorها
+### Table of contents and anchors
 
-هر تیتر `h1`–`h6` در خود HTML شناسهٔ پایدار می‌گیرد و `toc` دقیقاً همان شناسه‌ها را با سطح و متن نمایشی تیتر برمی‌گرداند (escape بر عهدهٔ مصرف‌کننده؛ قواعد پایین‌تر)؛ مصرف‌کننده anchor را با `href="#<id>"` و فهرست را از روی `toc` می‌سازد (رندر فهرست با مصرف‌کننده است، slug هرگز):
+Every `h1`–`h6` heading receives a stable id in the HTML itself, and `toc` returns exactly those ids with the heading's level and display text (escaping is the consumer's job; see the rules below); the consumer builds anchors as `href="#<id>"` and the list from `toc` (list rendering is the consumer's, the slug never is):
 
 ```js
 const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## نصب app' })
@@ -88,17 +81,19 @@ const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## ن�
 // ]
 ```
 
-قواعد شناسه تیتر:
+Heading-id rules:
 
-- شناسه فقط داخل افزونه ساخته می‌شود (یک slugger برای همه مصرف‌کنندگان؛ ویرایشگر و ویکی id یکسان می‌بینند).
-- شکل: `user-content-h-<slug>` و با `idPrefix` کالر `user-content-<prefix>-h-<slug>` — همان دامنهٔ پاورقی، با قطعهٔ `h-` که از تداخل با `fn-`/`fnref-` جلوگیری می‌کند.
-- slug: حرف/رقم لاتین کوچک‌شده حفظ می‌شود؛ فاصله و `-` به یک `-` فرو می‌ریزند؛ نشانه‌گذاری ASCII حذف می‌شود؛ نویسه‌های غیر ASCII حرف‌دار/رقم‌دار هر خط (فارسی) درصد-انکد می‌شوند (`%D9...`، هم‌راستا با شناسهٔ پاورقی، امن در URL hash)؛ بقیهٔ نویسه‌ها (مثل خط‌تیرهٔ بلند و نیم‌فاصله) حذف می‌شوند؛ نتیجهٔ تهی به `h` و تکراری‌ها داخل همان فراخوانی به `-1`، `-2`... می‌رسند.
-- `id` تیترِ پیش‌موجود در HTML خام با شناسهٔ افزونه جایگزین می‌شود؛ تیتر بخش پاورقی (`footnote-label`) دست‌نخورده می‌ماند و در `toc` نمی‌آید؛ تیتر داخل کامنت و زیردرخت `script`/`style` نادیده گرفته می‌شود.
-- `text` در `toc` متن نمایشی رمزگشایی‌شدهٔ تیتر است — عیناً همان چیزی که سانیتایزر رندر می‌کند؛ می‌تواند نویسه‌های خام `<`/`>` را از پاره‌خط‌های تگ مرده (سرفرفتار در برابر `<` تو در تو بیرون از نقل‌قول) حمل کند، پس «بدون تگ» تضمین نمی‌شود و مصرف‌کننده هنگام درج در HTML باید بدون exception آن را escape کند.
+- The id is built only inside the plugin (one slugger for all consumers; editor and wiki see identical ids).
+- Shape: `user-content-h-<slug>`, or `user-content-<prefix>-h-<slug>` with the caller's `idPrefix` — the same domain as footnotes, with the `h-` segment preventing collision with `fn-`/`fnref-`.
+- Slug: Latin letters/digits are kept lowercased; spaces and `-` collapse to a single `-`; ASCII punctuation is removed; non-ASCII letter/digit characters (Persian) are percent-encoded (`%D9...`, aligned with the footnote id, safe in a URL hash); everything else (em dash, ZWNJ) is dropped; an empty result becomes `h`, duplicates within the same call get `-1`, `-2`, …
+- A pre-existing `id` on a raw-HTML heading is replaced by the plugin's id; the footnote-section heading (`footnote-label`) stays untouched and never enters `toc`; headings inside comments and `script`/`style` subtrees are ignored.
+- `toc.text` is the heading's decoded display text — exactly what the sanitizer renders. It can carry raw `<`/`>` characters from dead-markup runs (a stray `<` nesting outside quotes), so "no tags" is not guaranteed: the consumer must escape it without exception when inserting into HTML.
+- The close-tag resolution and tag scanning mirror the sanitizer's models: a `</hN>` closes the innermost open `hN`, a closer of any tag opened under a heading closes that heading too, stray closers are no-ops, closers inside `script`/`style` subtrees, comments or dead markup never close a heading, and a `<hN>` inside a quoted attribute value never receives an id or creates a toc entry.
+- Injection and text extraction are single-pass: every character costs the same, and performance gates keep the family linear (unclosed headings, deep unclosed-tag bases with many heading closes, stray closers, repeated same-text headings, document-scale comment clamps).
 
-### استفاده در مرورگر
+### Browser use
 
-نام‌های ساده در مرورگر بدون باندلر به import map نیاز دارند — و نه فقط چهار نام مستقیم، بلکه همه ۳۱ بسته transitive (از دل `micromark` و `parsneshan`) که این نگاشت با Chromium headless آزمایش شده و خروجی‌اش بایت‌به‌بایت با Node یکی است. مسیرهای نسبی map نسبت به **صفحه HTML** سنجیده می‌شوند، نه نسبت به این فایل:
+Bare names in a bundler-less browser need an import map — and not just the four direct names, but all 31 transitive packages (from `micromark` and `parsneshan`); this map was tested under headless Chromium and its output is byte-identical with Node's. Relative map paths are resolved against the **HTML page**, not this file:
 
 ```json
 {
@@ -136,7 +131,7 @@ const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## ن�
     "micromark-util-encode": "./vendor/micromark-util-encode@2.0.1/index.js",
     "micromark-util-html-tag-name": "./vendor/micromark-util-html-tag-name@2.0.1/index.js",
     "micromark-util-normalize-identifier": "./vendor/micromark-util-normalize-identifier@2.0.1/index.js",
-    "micromark-util-resolve-all": "./vendor/micromark-util-resolve-all@2.0.1/index.js",
+    "micromark-util-resolve-all": "./vendor/micromark-util-resolve-all@1.0.0/index.js",
     "micromark-util-sanitize-uri": "./vendor/micromark-util-sanitize-uri@2.0.1/index.js",
     "micromark-util-subtokenize": "./vendor/micromark-util-subtokenize@2.1.0/index.js",
     "micromark-util-symbol": "./vendor/micromark-util-symbol@2.0.1/lib/default.js",
@@ -147,9 +142,11 @@ const { html, toc } = service.renderFragment({ markdown: '# مقدمه\n\n## ن�
 }
 ```
 
-نکته‌ها:
-- `parsneshan` روی npm نیست؛ checkout همان مخزن را کنار پروژه بگذارید و نگاشت کنید. زیرمسیرهای `extensions/*` را تک‌تک بنویسید: کلید پیشوندی (`parsneshan/`) پسوند `.js` را خودش اضافه نمی‌کند و در مرورگر خطای MIME می‌دهد (با تست واقعی گرفته شد). اگر پارس‌نشان افزونه تازه‌ای اضافه کند، زیرمسیرش را همین‌جا دستی اضافه کنید. نگاشت پارس‌نشان فقط برای مصرف‌کننده‌ای لازم است که فارسی می‌خواهد.
-- برای محصول نهایی و آفلاین (Capacitor/Tauri) همین بسته‌ها را با نسخه پین‌شده کنار پروژه (`vendor/`) بگذارید: با قطع اینترنت CDN می‌میرد و نشانی ثابت هم تغییرناپذیری فایل سرور را تضمین نمی‌کند. ساخت پوشه از روی `node_modules` نصب‌شده (تست‌شده):
+Notes:
+
+- `parsneshan` is not on npm; put a checkout of that repository next to the project and map it. Write each `extensions/*` subpath individually: a prefix key (`parsneshan/`) does not append `.js` itself and the browser answers with a MIME error (caught by a real test). When Parsneshan grows a new extension, add its subpath here by hand. The Parsneshan map is only needed by a consumer that wants Persian.
+- For the final product and offline use (Capacitor/Tauri), put these packages pinned next to the project (`vendor/`): a CDN dies without internet, and a fixed URL does not guarantee the file's immutability either. Build the folder from the installed `node_modules` (tested):
+
 ```bash
 mkdir -p vendor
 for d in node_modules/micromark*/ node_modules/decode-named-character-reference node_modules/character-entities; do
@@ -158,8 +155,10 @@ for d in node_modules/micromark*/ node_modules/decode-named-character-reference 
 done
 rm -rf vendor/parsneshan && cp -r node_modules/parsneshan vendor/parsneshan
 ```
-(فقط bash در لینوکس و مک؛ در ویندوز از WSL یا Git Bash استفاده کنید.)
-- نسخه‌های نگاشت پین‌شده‌اند ولی `package.json` بازه می‌دهد (`^`)؛ پس از هر `npm update` نگاشت را با نسخه‌های واقعی `package-lock.json` هماهنگ کنید وگرنه مرورگر و Node دو نسخه متفاوت بارگذاری می‌کنند.
+
+(bash on Linux and macOS only; on Windows use WSL or Git Bash.)
+
+- The map's versions are pinned but `package.json` gives ranges (`^`); after every `npm update`, re-sync the map with the real versions in `package-lock.json`, or the browser and Node load two different versions.
 
 ```js
 import MarkdownService from 'pey.markdown/lib/markdown-service.js'
@@ -167,58 +166,57 @@ import MarkdownService from 'pey.markdown/lib/markdown-service.js'
 const { html } = new MarkdownService().renderFragment({ markdown: '# سلام' })
 ```
 
-### CSS تیتر پاورقی
+### Footnote-heading CSS
 
-تیتر پاورقی کلاس `sr-only` دارد ولی شیوه‌نامه همراهش نیست؛ مصرف‌کننده خودش می‌دهد، وگرنه تیتر نمایان می‌ماند. اگر میزبان خودش `sr-only` دارد (Bootstrap یا Tailwind) همان کافی است:
+The footnote heading carries the `sr-only` class but no stylesheet ships with it; the consumer provides it, or the heading stays visible. If the host already has `sr-only` (Bootstrap or Tailwind), that suffices:
 
 ```css
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 ```
 
-## رویدادها
+## Events
 
-- منتشر می‌کند: هیچی (`events: []`).
-- گوش می‌دهد: هیچی (بدون dependency، نیازی به `core:service-unavailable` نیست).
+- Publishes: none (`events: []`).
+- Listens to: none (no dependencies, so no need for `core:service-unavailable`).
 
-## مرجع خطاها
+## Errors Reference
 
-| کد | نوع | چه زمانی |
+All errors follow the Bonyan standard structure (`code/message/source/type/timestamp/detail`) and carry no input content or sensitive data.
+
+| Code | Type | Situation |
 |---|---|---|
-| `MARKDOWN_RENDER_FAILED` | operational | ورودی نامعتبر (غیررشته‌ای، افزونه غیرآرایه‌ای)، عبور از `maxInputChars`، یا خطای داخلی رندر/ضدعفونی |
-| `SERVICE_UNAVAILABLE` | operational (قرارداد مشترک همه سرویس‌ها) | فراخوانی پس از deactivate شدن افزونه |
+| `MARKDOWN_RENDER_FAILED` | operational | Invalid input (non-string, non-array extensions), exceeding `maxInputChars`, or an internal render/sanitize failure |
+| `SERVICE_UNAVAILABLE` | operational (the shared contract of every service) | Called after the plugin was deactivated |
 
-همه خطاها ساختار استاندارد بنیان دارند (`code/message/source/type/timestamp/detail`) و محتوای ورودی یا داده حساس حمل نمی‌کنند.
+## Config
 
-## پیکربندی
-
-| کلید | نوع | الزامی | پیش‌فرض |
+| Key | Type | Required | Default |
 |---|---|---|---|
-| `maxInputChars` | number | خیر | `200000` |
-| `allowExternalImages` | boolean | خیر | `true` |
+| `maxInputChars` | number | No | `200000` |
+| `allowExternalImages` | boolean | No | `true` |
 
-عبور از سقف خطای `MARKDOWN_RENDER_FAILED` می‌دهد، نه برش خاموش.
+Exceeding the cap yields `MARKDOWN_RENDER_FAILED`, not a silent truncation. `allowExternalImages: false` keeps only relative and `data:image` images (by default external images are allowed and the viewer's IP travels to the other site).
 
-## قوانین افزونه
+## Business Rules
 
-- GFM (جدول، تسک‌لیست، strikethrough، اتولینک) همیشه روشن است و قابل خاموش‌کردن نیست.
-- رفتار فارسی فقط وقتی اعمال می‌شود که کالر افزونه را در همان فراخوانی پاس بدهد؛ بدون تزریق، خروجی کاملاً استاندارد است.
-- ترتیب ترکیب افزونه‌ها: اول GFM، بعد افزونه‌های کالر به ترتیب آرایه. در تداخل، دیرتر ثبت‌شده می‌برد (construct دیرتر زودتر امتحان می‌شود و هندلر html بازنویسی می‌شود)؛ پس افزونه کالر بر GFM می‌چربد.
-- پاورقی GFM با ساختار کامل حفظ می‌شود؛ برچسب‌ها پیش‌فرض انگلیسی‌اند و فقط با `footnoteOptions` کالر فارسی می‌شوند (مثل `persianFootnoteOptions` از پارس‌نشان: `پاورقی`، `بازگشت به ارجاع N`). رشته‌های فارسی متعلق به پارس‌نشان‌اند و این افزونه فقط آن‌ها را به GFM می‌دهد. شناسه‌های ارجاع با `idPrefix` کالر (رشته یا عدد صحیح؛ مثل شناسه پیام) یکتا می‌شوند و بدون آن پایدار می‌مانند ولی در چند fragment یک صفحه تکرار می‌شوند (HTML نامعتبر؛ لینک به اولین مورد می‌پرد). `idPrefix` فقط رشته یا عدد صحیح معمولی با حروف لاتین، رقم و `_ : . -` است (عدد باید چنان باشد که `String(n)` تمیز بماند)؛ شناسه فارسی را کالر باید به شکل لاتین تبدیل کند. تیتر مخفی `footnote-label` در همه fragmentها مشترک است (بی‌ضرر). لینک `tel:` کار می‌کند.
-- پیشوند شناسه قابل‌پیش‌بینی است: مهاجم می‌تواند لینک پاورقی پیام‌های دیگر را به عنصر خودش بکشاند (ریسک کم)؛ برای محتوای حساس، `idPrefix` غیرقابل‌حدس بدهید. در حالت نظریِ تبانی کالر و نویسنده (پیشوند `a-fn-b` با برچسب `c` در برابر پیشوند `a` با برچسب `b-fn-c`) شناسه یکسان ساخته می‌شود؛ نادیده‌گرفتنی است.
-- تصاویر خارجی (مطلق `http(s)` با هر شکل اسلش، پروتکل-نسبی `//`، بک‌اسلش، یا مبهم‌سازی‌شده با انتیتی) به‌صورت پیش‌فرض مجازند (آی‌پی بیننده به سایت دیگر می‌رود)؛ با `allowExternalImages: false` فقط نسبی و `data:image` می‌مانند.
-- `id` (تیتر و پاورقی) فقط با پیشوند `user-content-` یا دقیقاً `footnote-label` می‌ماند، `aria-describedby` فقط به `footnote-label` اشاره می‌کند، `aria-label` فقط قالب `بازگشت به ارجاع N` را دارد و `data-footnote-*` فقط تهی می‌ماند — تا HTML خام نتواند آن‌ها را جعل کند.
-- شناسهٔ تیترهای `h1`–`h6` فقط در خود افزونه ساخته و با همان دامنهٔ `idPrefix` اعمال می‌شود و آرایهٔ `toc` عیناً همان شناسه‌های HTML را برمی‌گرداند (جزئیات در «فهرست‌مطالب و anchorها»؛ رندر فهرست با مصرف‌کننده است).
-- مصرف‌کننده باید CSS کلاس `sr-only` را خودش بدهد، وگرنه تیتر پاورقی نمایان می‌ماند.
-- خروجی همیشه fragment است؛ هیچ `<html>`، تم یا CSS تولید نمی‌شود.
-- همه خروجی‌ها از سانیتایزر عبور می‌کنند؛ هیچ مسیری HTML ضدعفونی‌نشده برنمی‌گرداند.
-- HTML خام سورس (بلوکی و درون‌خطی) مطابق CommonMark عبور می‌کند و سپس ضدعفونی می‌شود: تگ مجاز می‌ماند، تگ نامجاز باز می‌شود (محتوایش می‌ماند) و `script`/`style` هرگز زنده نمی‌مانند (حذف با محتوا یا escape رندر).
-- کد فنس‌دار فقط `<pre><code class="language-x">` ساده است؛ هایلایت انجام نمی‌شود.
-- سرویس بدون حافظه رندر و سنکرون است؛ هیچ چیز بین فراخوانی‌ها نگه داشته نمی‌شود جز پرچم چرخه‌حیات فعال/غیرفعال.
+- GFM (tables, task lists, strikethrough, autolinks) is always on and cannot be turned off.
+- Persian behavior applies only when the caller passes the extension in the same call; without injection the output is fully standard.
+- Extension composition order: GFM first, then the caller's extensions in array order. On conflict the later registration wins (the later construct is tried first and its html handler overwrites), so a caller's extension overrides GFM.
+- GFM footnotes keep their full structure; labels default to English and become Persian only through the caller's `footnoteOptions` (e.g. `persianFootnoteOptions` from Parsneshan: `پاورقی`, `بازگشت به ارجاع N`). The Persian strings belong to Parsneshan; this plugin only hands them to GFM. Reference ids become unique with the caller's `idPrefix` (string or plain integer, like a message id) and stay stable without it — but repeat across fragments on one page (invalid HTML; a link jumps to the first occurrence). `idPrefix` accepts only a string or plain integer of Latin letters, digits and `_ : . -`; a Persian id must be transliterated by the caller. The hidden `footnote-label` heading is shared across all fragments (harmless). `tel:` links work.
+- The id prefix is predictable: an attacker could pull another message's footnote link onto their own element (low risk); for sensitive content give an unpredictable `idPrefix`. In the theoretical caller-author collusion case (prefix `a-fn-b` with label `c` versus prefix `a` with label `b-fn-c`) the same id is built; negligible.
+- `id` (heading and footnote) survives only with the `user-content-` prefix or exactly `footnote-label`; `aria-describedby` points only at `footnote-label`; `aria-label` only carries the `بازگشت به ارجاع N` pattern; `data-footnote-*` stays empty only — so raw HTML cannot forge them.
+- Heading ids for `h1`–`h6` are built only inside the plugin, applied with the same `idPrefix` domain, and the `toc` array returns exactly the HTML's ids (list rendering is the consumer's).
+- The consumer must provide the `sr-only` CSS, or the footnote heading stays visible.
+- The output is always a fragment; no `<html>`, theme or CSS is produced.
+- Every output passes the sanitizer; no path returns unsanitized HTML.
+- Raw source HTML (block and inline) passes per CommonMark and is then sanitized: an allowed tag stays, a disallowed tag is unwrapped (its content survives), and `script`/`style` never survive (dropped with content or escaped to text).
+- Fenced code is plain `<pre><code class="language-x">`; no syntax highlighting.
+- The service is stateless and synchronous; nothing is kept between calls except the active/inactive lifecycle flag.
 
-## محدودیت‌ها
+## Constraints
 
-- اسمبل سند کامل، تم، روتر، رندر فهرست‌مطالب/anchor و دانلود فایل با مصرف‌کننده است؛ از این افزونه انتظار پوسته `<html>` نداشته باشید — برای فهرست و anchor فقط `toc` و idهای داخل HTML را بگیرید و خودتان بسازید.
-- افزونه‌های `syntaxExtensions`/`htmlExtensions` کد اجرایی‌اند؛ فقط افزونه‌های معتبر و قابل‌اعتماد (مثل پارس‌نشان) پاس بدهید، نه ورودی کاربر نهایی.
-- روی ماندن تگ نامجاز در خروجی حساب نکنید؛ فقط تگ‌های فهرست مجاز (از جمله `details`/`summary`/`kbd`) می‌مانند و بقیه باز می‌شوند.
-- این افزونه event منتشر نمی‌کند؛ هماهنگی بعد از رندر (مثلاً به‌روزرسانی UI) با سرویس صداکننده است.
-- **ورودی پاورقی‌سنگین:** هزینهٔ رندر خانوادهٔ «پاورقی‌های متمایز» (هر پاورقی یک ارجاع + یک تعریف — الگوی رایج گپ و ویکی) در خود micromark/پسوند gfm-footnote با مجذور شمار تعریف‌ها رشد می‌کند؛ هر دو گذر خودِ افزونه (تزریق شناسه و سانیتایزر) خطی‌اند، اما ورودی پاورقی‌سنگینِ نزدیک سقف `maxInputChars` می‌تواند چند ثانیه رندر **سنکرون** بگیرد و حلقهٔ رویداد میزبان را مسدود کند. برای محتوای پاورقی‌محور سقف ورودی را پایین بیاورید یا چنین محتوایی را فراخوانی‌به‌فراخوانی تکه کنید. (گیت کارایی در آزمون‌ها رگرسیون بالادستی این کران را می‌گیرد.)
+- Full-document assembly, theme, routing, table-of-contents/anchor rendering and file download belong to the consumer; never expect a `<html>` shell from this plugin — take `toc` and the ids inside the HTML and build the rest yourself.
+- The `syntaxExtensions`/`htmlExtensions` extensions are executable code; pass only valid, trusted extensions (like Parsneshan), never end-user input.
+- Do not count on a disallowed tag staying in the output; only allowlist tags (including `details`/`summary`/`kbd`) survive and the rest are unwrapped.
+- The plugin publishes no events; post-render coordination (e.g. UI updates) is the calling service's business.
+- **Footnote-heavy input:** the cost of the "distinct footnotes" family (each footnote one reference + one definition — the common chat/wiki pattern) grows quadratically with the definition count inside micromark's gfm-footnote extension itself; both of this plugin's passes are linear, but footnote-heavy input near the `maxInputChars` cap can take several seconds of **synchronous** rendering and block the host's event loop. Lower the input cap for footnote-centric content or chunk such content call by call. (A performance gate in the tests guards the upstream dependency against regressions.)
